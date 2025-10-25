@@ -4,7 +4,7 @@
  */
 
 import { writable, derived, get } from 'svelte/store';
-import { apiClient } from '$services/apiClient.js';
+import { obsidianApiClient as apiClient } from '$services/obsidianApiClient.js';
 import { dbService } from '$services/dbService.js';
 import { syncStore } from './syncStore.js';
 import { uiStore } from './uiStore.js';

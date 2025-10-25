@@ -2,10 +2,18 @@
  * Application-wide constants
  */
 
-// API Configuration
-export const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8000';
+// API Configuration - Obsidian Local REST API
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://127.0.0.1:27124';
+export const API_KEY = import.meta.env.VITE_API_KEY || '';
 export const API_TIMEOUT = 10000; // 10 seconds
 export const MAX_RETRIES = 3;
+
+// Log configuration (useful for debugging)
+if (typeof window !== 'undefined') {
+	console.log('[Config] API_BASE_URL:', API_BASE_URL);
+	console.log('[Config] API_KEY configured:', API_KEY ? 'Yes' : 'No');
+	console.log('[Config] Environment:', import.meta.env.MODE);
+}
 
 // Audio Recording
 export const MAX_RECORDING_DURATION = 60000; // 60 seconds in milliseconds
