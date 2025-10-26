@@ -125,8 +125,10 @@ class AudioService {
 			}
 		};
 
-		// Start recording
-		this.mediaRecorder.start();
+		// Start recording with timeslice to ensure regular chunk emission
+		// This prevents desktop browsers from buffering all audio in memory
+		// which can cause data loss or compression issues
+		this.mediaRecorder.start(1000); // Request data every 1000ms
 
 		// Setup waveform analyser
 		this._setupAnalyser();
