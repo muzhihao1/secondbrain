@@ -45,6 +45,14 @@ export async function POST({ request }) {
 			try {
 				const result = await transcribeWithCloudflare(audioBlob, voiceApiUrl);
 
+				// Log the successful transcription with full text
+				console.log('[Transcribe API] SUCCESS - Transcription completed:', {
+					textPreview: result.text.substring(0, 100),
+					fullTextLength: result.text.length,
+					provider: 'cloudflare-workers-ai',
+					language: result.language
+				});
+
 				return json({
 					success: true,
 					text: result.text,
@@ -144,8 +152,13 @@ async function transcribeWithCloudflare(audioBlob, voiceApiUrl) {
 
 	const result = await response.json();
 
+	// Debug: log the full response from Cloudflare
+	console.log('[Cloudflare Worker] Full response:', JSON.stringify(result, null, 2));
+
 	// Handle different response formats
 	if (result.text) {
+		console.log('[Cloudflare Worker] Transcribed text:', result.text);
+		console.log('[Cloudflare Worker] Text length:', result.text.length);
 		return {
 			text: result.text,
 			duration: result.duration,
@@ -155,6 +168,8 @@ async function transcribeWithCloudflare(audioBlob, voiceApiUrl) {
 	}
 
 	if (result.result && result.result.text) {
+		console.log('[Cloudflare Worker] Transcribed text (nested):', result.result.text);
+		console.log('[Cloudflare Worker] Text length:', result.result.text.length);
 		return {
 			text: result.result.text,
 			duration: result.result.duration,

@@ -299,8 +299,14 @@ ${data.content}
 				language: result.metadata?.language
 			});
 
+			// DEBUG: Log the actual transcribed text
+			console.log('[ObsidianAPI] Transcribed text content:', transcribedText);
+			console.log('[ObsidianAPI] Text as JSON:', JSON.stringify(transcribedText));
+
 			// Save transcribed text to Obsidian
-			return await this.capture({
+			console.log('[ObsidianAPI] Attempting to save to Obsidian...');
+
+			const saveResult = await this.capture({
 				content: transcribedText,
 				input_type: 'voice',
 				metadata: {
@@ -312,6 +318,9 @@ ${data.content}
 					}
 				}
 			});
+
+			console.log('[ObsidianAPI] Save to Obsidian result:', saveResult);
+			return saveResult;
 
 		} catch (error) {
 			console.error('[ObsidianAPI] Voice capture failed:', error);
