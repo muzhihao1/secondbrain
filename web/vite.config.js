@@ -65,12 +65,6 @@ export default defineConfig({
 	],
 	server: {
 		port: 5173,
-		host: true, // Allow external connections (for mobile testing)
-		proxy: {
-			'/api': {
-				target: 'http://localhost:8000',
-				changeOrigin: true
-			}
-		}
+		host: true // Allow external connections (for mobile testing)
 	}
 });

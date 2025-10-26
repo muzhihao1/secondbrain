@@ -263,74 +263,88 @@ ${data.content}
 
 	/**
 	 * Capture voice recording and convert to text
+	 * Uses SvelteKit API endpoint for server-side transcription
 	 * @param {Blob} audioBlob - Audio file blob
 	 * @returns {Promise<Object>} Response with transcribed text
 	 */
 	async captureVoice(audioBlob) {
 		try {
-			// 方案1: 使用 Cloudflare Workers AI (推荐,需配置)
-			// 如果环境变量中配置了 VOICE_API_URL,使用 Cloudflare Workers
-			const voiceApiUrl = import.meta.env.PUBLIC_VOICE_API_URL;
+			console.log('[ObsidianAPI] Sending audio to transcription endpoint:', {
+				size: `${Math.round(audioBlob.size / 1024)}KB`,
+				type: audioBlob.type
+			});
 
-			if (voiceApiUrl) {
-				console.log('Using Cloudflare Workers AI for transcription');
-				const response = await fetch(voiceApiUrl, {
-					method: 'POST',
-					body: audioBlob,
-					headers: {
-						'Content-Type': audioBlob.type
-					}
-				});
-
-				if (!response.ok) {
-					throw new Error(`Transcription failed: ${response.statusText}`);
+			// Call SvelteKit API endpoint for server-side transcription
+			// This avoids CORS issues and protects API keys
+			const response = await fetch('/api/transcribe', {
+				method: 'POST',
+				body: audioBlob,
+				headers: {
+					'Content-Type': audioBlob.type || 'audio/webm'
 				}
+			});
 
-				const result = await response.json();
-				const transcribedText = result.text;
-
-				// Save transcribed text to Obsidian
-				return await this.capture({
-					content: transcribedText,
-					input_type: 'voice'
-				});
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({ message: response.statusText }));
+				throw new Error(errorData.message || `Transcription failed: ${response.statusText}`);
 			}
 
-			// 方案2: 浏览器原生 Web Speech API (备用方案)
-			console.log('Using Web Speech API for transcription');
-			const transcribedText = await this._transcribeWithWebSpeech(audioBlob);
+			const result = await response.json();
+			const transcribedText = result.text;
+
+			console.log('[ObsidianAPI] Transcription successful:', {
+				provider: result.provider,
+				model: result.model,
+				textLength: transcribedText.length,
+				language: result.metadata?.language
+			});
 
 			// Save transcribed text to Obsidian
 			return await this.capture({
 				content: transcribedText,
-				input_type: 'voice'
+				input_type: 'voice',
+				metadata: {
+					transcription: {
+						provider: result.provider,
+						model: result.model,
+						language: result.metadata?.language,
+						duration: result.metadata?.duration
+					}
+				}
 			});
 
 		} catch (error) {
-			console.error('Voice capture failed:', error);
+			console.error('[ObsidianAPI] Voice capture failed:', error);
 
-			// 降级: 保存音频文件引用
+			// Graceful degradation: save audio metadata reference
 			const timestamp = new Date();
-			const dateStr = timestamp.toISOString().split('T')[0];
-			const timeStr = timestamp.toTimeString().split(' ')[0].replace(/:/g, '-');
-
 			const fallbackContent = `🎤 语音记录 (转录失败)
 
 > ⚠️ 语音转文字失败: ${error.message}
 >
-> 请配置 Cloudflare Workers AI 或使用支持 Web Speech API 的浏览器 (Chrome)
+> 可能原因:
+> - 转录服务未配置或不可用
+> - 音频格式不支持
+> - 网络连接问题
 
 **录制时间**: ${timestamp.toLocaleString('zh-CN')}
 **文件大小**: ${Math.round(audioBlob.size / 1024)} KB
 **音频格式**: ${audioBlob.type}
 
 ---
-*如需配置语音转文字功能,请参考 README.md*
+*配置说明:*
+1. 设置 PUBLIC_VOICE_API_URL 环境变量指向 Cloudflare Workers AI
+2. 或设置 OPENAI_API_KEY 使用 OpenAI Whisper API
 `;
 
 			return await this.capture({
 				content: fallbackContent,
-				input_type: 'voice'
+				input_type: 'voice',
+				metadata: {
+					error: error.message,
+					audioSize: audioBlob.size,
+					audioType: audioBlob.type
+				}
 			});
 		}
 	}
