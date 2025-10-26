@@ -262,6 +262,136 @@ ${data.content}
 	}
 
 	/**
+	 * Capture voice recording and convert to text
+	 * @param {Blob} audioBlob - Audio file blob
+	 * @returns {Promise<Object>} Response with transcribed text
+	 */
+	async captureVoice(audioBlob) {
+		try {
+			// 方案1: 使用 Cloudflare Workers AI (推荐,需配置)
+			// 如果环境变量中配置了 VOICE_API_URL,使用 Cloudflare Workers
+			const voiceApiUrl = import.meta.env.PUBLIC_VOICE_API_URL;
+
+			if (voiceApiUrl) {
+				console.log('Using Cloudflare Workers AI for transcription');
+				const response = await fetch(voiceApiUrl, {
+					method: 'POST',
+					body: audioBlob,
+					headers: {
+						'Content-Type': audioBlob.type
+					}
+				});
+
+				if (!response.ok) {
+					throw new Error(`Transcription failed: ${response.statusText}`);
+				}
+
+				const result = await response.json();
+				const transcribedText = result.text;
+
+				// Save transcribed text to Obsidian
+				return await this.capture({
+					content: transcribedText,
+					input_type: 'voice'
+				});
+			}
+
+			// 方案2: 浏览器原生 Web Speech API (备用方案)
+			console.log('Using Web Speech API for transcription');
+			const transcribedText = await this._transcribeWithWebSpeech(audioBlob);
+
+			// Save transcribed text to Obsidian
+			return await this.capture({
+				content: transcribedText,
+				input_type: 'voice'
+			});
+
+		} catch (error) {
+			console.error('Voice capture failed:', error);
+
+			// 降级: 保存音频文件引用
+			const timestamp = new Date();
+			const dateStr = timestamp.toISOString().split('T')[0];
+			const timeStr = timestamp.toTimeString().split(' ')[0].replace(/:/g, '-');
+
+			const fallbackContent = `🎤 语音记录 (转录失败)
+
+> ⚠️ 语音转文字失败: ${error.message}
+>
+> 请配置 Cloudflare Workers AI 或使用支持 Web Speech API 的浏览器 (Chrome)
+
+**录制时间**: ${timestamp.toLocaleString('zh-CN')}
+**文件大小**: ${Math.round(audioBlob.size / 1024)} KB
+**音频格式**: ${audioBlob.type}
+
+---
+*如需配置语音转文字功能,请参考 README.md*
+`;
+
+			return await this.capture({
+				content: fallbackContent,
+				input_type: 'voice'
+			});
+		}
+	}
+
+	/**
+	 * Transcribe audio using Web Speech API (fallback method)
+	 * @private
+	 * @param {Blob} audioBlob - Audio file blob
+	 * @returns {Promise<string>} Transcribed text
+	 */
+	async _transcribeWithWebSpeech(audioBlob) {
+		return new Promise((resolve, reject) => {
+			// Check browser support
+			const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+			if (!SpeechRecognition) {
+				reject(new Error('浏览器不支持语音识别。请使用 Chrome 浏览器或配置 Cloudflare Workers AI。'));
+				return;
+			}
+
+			// Create audio element to play the recorded audio
+			const audioUrl = URL.createObjectURL(audioBlob);
+			const audio = new Audio(audioUrl);
+
+			// Initialize speech recognition
+			const recognition = new SpeechRecognition();
+			recognition.lang = 'zh-CN'; // Chinese language
+			recognition.continuous = true;
+			recognition.interimResults = false;
+
+			let transcript = '';
+
+			recognition.onresult = (event) => {
+				for (let i = event.resultIndex; i < event.results.length; i++) {
+					if (event.results[i].isFinal) {
+						transcript += event.results[i][0].transcript + ' ';
+					}
+				}
+			};
+
+			recognition.onerror = (event) => {
+				URL.revokeObjectURL(audioUrl);
+				reject(new Error(`语音识别失败: ${event.error}`));
+			};
+
+			recognition.onend = () => {
+				URL.revokeObjectURL(audioUrl);
+				if (transcript.trim()) {
+					resolve(transcript.trim());
+				} else {
+					reject(new Error('未识别到语音内容'));
+				}
+			};
+
+			// Note: Web Speech API works with live microphone, not pre-recorded audio
+			// This is a limitation. For proper transcription, use Cloudflare Workers AI
+			reject(new Error('Web Speech API 仅支持实时语音识别,不支持预录音频。请配置 Cloudflare Workers AI。'));
+		});
+	}
+
+	/**
 	 * Health check (check if plugin is accessible)
 	 * @returns {Promise<Object>} Health status
 	 */

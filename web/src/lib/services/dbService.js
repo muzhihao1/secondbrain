@@ -270,7 +270,8 @@ class DBService {
 				const total = countRequest.result;
 
 				const syncedIndex = objectStore.index('synced');
-				const unsyncedRequest = syncedIndex.count(false);
+				// Use IDBKeyRange.only() to create a proper key range
+				const unsyncedRequest = syncedIndex.count(IDBKeyRange.only(false));
 
 				unsyncedRequest.onsuccess = () => {
 					resolve({
