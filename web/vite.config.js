@@ -3,6 +3,18 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+	// Explicitly inject environment variables from Vercel
+	define: {
+		'import.meta.env.PUBLIC_VOICE_API_URL': JSON.stringify(
+			process.env.PUBLIC_VOICE_API_URL || ''
+		),
+		'import.meta.env.PUBLIC_API_URL': JSON.stringify(
+			process.env.PUBLIC_API_URL || 'https://obsidian-api.chuhaihub.org'
+		),
+		'import.meta.env.PUBLIC_API_KEY': JSON.stringify(
+			process.env.PUBLIC_API_KEY || ''
+		)
+	},
 	plugins: [
 		sveltekit(),
 		VitePWA({
