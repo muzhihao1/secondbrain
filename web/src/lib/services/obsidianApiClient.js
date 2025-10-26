@@ -95,6 +95,9 @@ class ObsidianAPIClient {
 		// Use PUT method to create/update file at specified path
 		const response = await this._request(`/vault/${encodeURIComponent(path)}`, {
 			method: 'PUT',
+			headers: {
+				'Content-Type': 'text/markdown'  // Override to send markdown text
+			},
 			body: content  // Send content directly as text, not JSON
 		});
 
