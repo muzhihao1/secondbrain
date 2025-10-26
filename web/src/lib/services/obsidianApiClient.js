@@ -92,12 +92,10 @@ class ObsidianAPIClient {
 	 * @returns {Promise<Object>} Response with file path
 	 */
 	async createNote(content, path) {
-		const response = await this._request('/vault/', {
-			method: 'POST',
-			body: JSON.stringify({
-				content: content,
-				path: path
-			})
+		// Use PUT method to create/update file at specified path
+		const response = await this._request(`/vault/${encodeURIComponent(path)}`, {
+			method: 'PUT',
+			body: content  // Send content directly as text, not JSON
 		});
 
 		return {
