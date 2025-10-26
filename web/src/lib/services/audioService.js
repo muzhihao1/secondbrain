@@ -53,13 +53,20 @@ class AudioService {
 	 * @returns {string} Supported MIME type
 	 */
 	_getSupportedMimeType() {
+		// DEBUG: Log all MIME type support status
+		console.log('[AudioService] Checking MIME type support:');
+		AUDIO_MIME_TYPES.forEach((type) => {
+			const supported = MediaRecorder.isTypeSupported(type);
+			console.log(`  ${type}: ${supported ? '✅ SUPPORTED' : '❌ NOT SUPPORTED'}`);
+		});
+
 		for (const mimeType of AUDIO_MIME_TYPES) {
 			if (MediaRecorder.isTypeSupported(mimeType)) {
-				console.log('Using MIME type:', mimeType);
+				console.log('[AudioService] Selected MIME type:', mimeType);
 				return mimeType;
 			}
 		}
-		console.warn('No preferred MIME type supported, using default');
+		console.warn('[AudioService] No preferred MIME type supported, using browser default');
 		return '';
 	}
 
@@ -111,7 +118,10 @@ class AudioService {
 		// Collect audio data
 		this.mediaRecorder.ondataavailable = (event) => {
 			if (event.data.size > 0) {
+				console.log(`[AudioService] Audio chunk received: ${event.data.size} bytes`);
 				this.audioChunks.push(event.data);
+			} else {
+				console.warn('[AudioService] Received empty audio chunk!');
 			}
 		};
 
@@ -149,7 +159,35 @@ class AudioService {
 				});
 
 				const duration = Date.now() - this.recordingStartTime;
-				console.log(`Recording stopped. Duration: ${duration}ms, Size: ${audioBlob.size} bytes`);
+
+				// COMPREHENSIVE DIAGNOSTIC LOGS
+				console.log('[AudioService] === Recording Complete ===');
+				console.log('  Duration:', duration, 'ms');
+				console.log('  Blob size:', audioBlob.size, 'bytes');
+				console.log('  Blob type:', audioBlob.type);
+				console.log('  Chunks collected:', this.audioChunks.length);
+				console.log('  Expected size (approx):', Math.round(AUDIO_BIT_RATE * duration / 8000), 'bytes');
+
+				// Calculate size ratio to expected
+				const expectedSize = AUDIO_BIT_RATE * duration / 8000;
+				const sizeRatio = audioBlob.size / expectedSize;
+				if (sizeRatio < 0.1) {
+					console.error('[AudioService] ⚠️  AUDIO TOO SMALL! Only', Math.round(sizeRatio * 100), '% of expected size');
+					console.error('[AudioService] This indicates microphone is not capturing audio properly');
+					console.error('[AudioService] Possible causes:');
+					console.error('  1. Microphone permission denied (check browser permissions)');
+					console.error('  2. Microphone muted or volume at zero (check OS settings)');
+					console.error('  3. Another app has exclusive microphone access');
+					console.error('  4. Incompatible audio format for this browser/OS');
+				} else {
+					console.log('[AudioService] ✅ Audio size looks reasonable');
+				}
+
+				// Create download link for debugging (desktop only)
+				if (typeof document !== 'undefined' && audioBlob.size > 0) {
+					const url = URL.createObjectURL(audioBlob);
+					console.log('[AudioService] 🎧 Test audio: Create <a href="' + url + '" download="test-recording.webm">Download</a> and play it');
+				}
 
 				this.isRecording = false;
 				clearTimeout(this.maxDurationTimeout);
