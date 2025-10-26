@@ -38,7 +38,8 @@ export async function POST({ request }) {
 		});
 
 		// Strategy 1: Use Cloudflare Workers AI (Primary)
-		const voiceApiUrl = env.PUBLIC_VOICE_API_URL;
+		// Note: Use VOICE_API_URL (without PUBLIC_ prefix) for server-side access
+		const voiceApiUrl = env.VOICE_API_URL || env.PUBLIC_VOICE_API_URL;
 
 		if (voiceApiUrl) {
 			try {
@@ -203,8 +204,15 @@ async function transcribeWithOpenAI(audioBlob) {
  * GET endpoint for health check
  */
 export async function GET() {
+	// Debug: log environment variables (remove after testing)
+	console.log('[Health Check] Environment variables:', {
+		VOICE_API_URL: env.VOICE_API_URL ? 'SET' : 'NOT SET',
+		PUBLIC_VOICE_API_URL: env.PUBLIC_VOICE_API_URL ? 'SET' : 'NOT SET',
+		OPENAI_API_KEY: env.OPENAI_API_KEY ? 'SET' : 'NOT SET'
+	});
+
 	const services = {
-		cloudflare: !!env.PUBLIC_VOICE_API_URL,
+		cloudflare: !!(env.VOICE_API_URL || env.PUBLIC_VOICE_API_URL),
 		openai: !!env.OPENAI_API_KEY
 	};
 
