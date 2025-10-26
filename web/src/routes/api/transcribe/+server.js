@@ -14,10 +14,7 @@
  */
 
 import { json, error } from '@sveltejs/kit';
-import {
-	PUBLIC_VOICE_API_URL,
-	PUBLIC_API_KEY
-} from '$env/static/public';
+import { env } from '$env/dynamic/private';
 
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ request }) {
@@ -41,9 +38,11 @@ export async function POST({ request }) {
 		});
 
 		// Strategy 1: Use Cloudflare Workers AI (Primary)
-		if (PUBLIC_VOICE_API_URL) {
+		const voiceApiUrl = env.PUBLIC_VOICE_API_URL;
+
+		if (voiceApiUrl) {
 			try {
-				const result = await transcribeWithCloudflare(audioBlob);
+				const result = await transcribeWithCloudflare(audioBlob, voiceApiUrl);
 
 				return json({
 					success: true,
@@ -60,7 +59,7 @@ export async function POST({ request }) {
 				console.error('[Transcribe API] Cloudflare Workers AI failed:', cfError);
 
 				// Fallback to OpenAI Whisper if available
-				if (process.env.OPENAI_API_KEY) {
+				if (env.OPENAI_API_KEY) {
 					console.log('[Transcribe API] Falling back to OpenAI Whisper');
 					const result = await transcribeWithOpenAI(audioBlob);
 
@@ -83,7 +82,7 @@ export async function POST({ request }) {
 		}
 
 		// Strategy 2: Use OpenAI Whisper API directly
-		if (process.env.OPENAI_API_KEY) {
+		if (env.OPENAI_API_KEY) {
 			const result = await transcribeWithOpenAI(audioBlob);
 
 			return json({
@@ -122,14 +121,17 @@ export async function POST({ request }) {
 /**
  * Transcribe audio using Cloudflare Workers AI
  * @param {Blob} audioBlob - Audio file
+ * @param {string} voiceApiUrl - Cloudflare Workers AI endpoint URL
  * @returns {Promise<{text: string, duration?: number, language?: string, confidence?: number}>}
  */
-async function transcribeWithCloudflare(audioBlob) {
-	const response = await fetch(PUBLIC_VOICE_API_URL, {
+async function transcribeWithCloudflare(audioBlob, voiceApiUrl) {
+	const apiKey = env.API_KEY || env.CLOUDFLARE_API_KEY;
+
+	const response = await fetch(voiceApiUrl, {
 		method: 'POST',
 		headers: {
 			'Content-Type': audioBlob.type || 'audio/webm',
-			...(PUBLIC_API_KEY && { 'Authorization': `Bearer ${PUBLIC_API_KEY}` })
+			...(apiKey && { 'Authorization': `Bearer ${apiKey}` })
 		},
 		body: audioBlob
 	});
@@ -178,7 +180,7 @@ async function transcribeWithOpenAI(audioBlob) {
 	const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
 		method: 'POST',
 		headers: {
-			'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+			'Authorization': `Bearer ${env.OPENAI_API_KEY}`
 		},
 		body: formData
 	});
@@ -202,8 +204,8 @@ async function transcribeWithOpenAI(audioBlob) {
  */
 export async function GET() {
 	const services = {
-		cloudflare: !!PUBLIC_VOICE_API_URL,
-		openai: !!process.env.OPENAI_API_KEY
+		cloudflare: !!env.PUBLIC_VOICE_API_URL,
+		openai: !!env.OPENAI_API_KEY
 	};
 
 	return json({
