@@ -5,7 +5,7 @@
 // API Configuration - Obsidian Local REST API
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://127.0.0.1:27124';
 export const API_KEY = import.meta.env.VITE_API_KEY || '';
-export const API_TIMEOUT = 10000; // 10 seconds
+export const API_TIMEOUT = 30000; // 30 seconds (increased for Cloudflare Tunnel latency)
 export const MAX_RETRIES = 3;
 
 // Log configuration (useful for debugging)
