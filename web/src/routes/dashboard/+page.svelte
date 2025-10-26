@@ -87,7 +87,7 @@
 	<!-- Statistics Cards -->
 	<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
 		<!-- Total Captures -->
-		<div class="bg-dark-200 border border-gray-700 rounded-lg p-6">
+		<div class="bg-background-secondary border border-gray-700 rounded-lg p-6">
 			<div class="flex items-center justify-between">
 				<div>
 					<p class="text-gray-400 text-sm">总记录数</p>
@@ -100,7 +100,7 @@
 		</div>
 
 		<!-- Synced Captures -->
-		<div class="bg-dark-200 border border-gray-700 rounded-lg p-6">
+		<div class="bg-background-secondary border border-gray-700 rounded-lg p-6">
 			<div class="flex items-center justify-between">
 				<div>
 					<p class="text-gray-400 text-sm">已同步</p>
@@ -113,7 +113,7 @@
 		</div>
 
 		<!-- Unsynced Captures -->
-		<div class="bg-dark-200 border border-gray-700 rounded-lg p-6">
+		<div class="bg-background-secondary border border-gray-700 rounded-lg p-6">
 			<div class="flex items-center justify-between">
 				<div>
 					<p class="text-gray-400 text-sm">待同步</p>
@@ -127,7 +127,7 @@
 	</div>
 
 	<!-- Online/Offline Status -->
-	<div class="mb-6 p-4 bg-dark-200 border border-gray-700 rounded-lg">
+	<div class="mb-6 p-4 bg-background-secondary border border-gray-700 rounded-lg">
 		<div class="flex items-center justify-between">
 			<div class="flex items-center gap-3">
 				<span class="text-2xl">{$syncStore.online ? '🌐' : '📵'}</span>
@@ -156,7 +156,7 @@
 	</div>
 
 	<!-- System Information -->
-	<div class="mb-6 p-4 bg-dark-200 border border-gray-700 rounded-lg">
+	<div class="mb-6 p-4 bg-background-secondary border border-gray-700 rounded-lg">
 		<h2 class="text-lg font-semibold mb-3">系统信息</h2>
 		<div class="space-y-2 text-sm">
 			<div class="flex justify-between">

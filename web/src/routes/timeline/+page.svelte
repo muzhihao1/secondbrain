@@ -135,7 +135,7 @@
 			<div class="space-y-3">
 				{#each captures as capture (capture.id)}
 					<div
-						class="bg-dark-200 border border-gray-700 rounded-lg p-4 hover:border-primary-700 transition-colors cursor-pointer"
+						class="bg-background-secondary border border-gray-700 rounded-lg p-4 hover:border-primary-700 transition-colors cursor-pointer"
 						on:click={() => (selectedCapture = capture)}
 						on:keydown={(e) => e.key === 'Enter' && (selectedCapture = capture)}
 						role="button"
@@ -200,7 +200,7 @@
 		tabindex="0"
 	>
 		<div
-			class="bg-dark-200 border border-gray-700 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+			class="bg-background-secondary border border-gray-700 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
 			on:click|stopPropagation
 			on:keydown|stopPropagation
 			role="dialog"
@@ -254,7 +254,7 @@
 
 			<!-- Modal Content -->
 			<div class="prose prose-invert max-w-none mb-6">
-				<pre class="whitespace-pre-wrap text-sm bg-dark-300 p-4 rounded-lg">{selectedCapture.content}</pre>
+				<pre class="whitespace-pre-wrap text-sm bg-background-tertiary p-4 rounded-lg">{selectedCapture.content}</pre>
 			</div>
 
 			<!-- Modal Actions -->

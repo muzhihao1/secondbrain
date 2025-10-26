@@ -13,7 +13,7 @@
 	});
 </script>
 
-<div class="min-h-screen bg-dark-100">
+<div class="min-h-screen bg-background-primary">
 	<slot />
 </div>
 
