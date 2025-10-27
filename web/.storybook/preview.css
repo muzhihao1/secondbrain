@@ -1,0 +1,24 @@
+/**
+ * Storybook Preview Styles
+ * Imports VNext design tokens and Tailwind with vnext preset
+ */
+
+@import '../src/lib/styles/tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Storybook-specific global styles */
+body {
+  margin: 0;
+  font-family: var(--font-family-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Apply default theme to Storybook canvas */
+.sb-show-main {
+  background-color: var(--color-neutral-100);
+  color: var(--text-primary);
+}

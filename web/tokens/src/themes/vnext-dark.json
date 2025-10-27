@@ -1,0 +1,22 @@
+{
+  "vnext": {
+    "dark": {
+      "color": {
+        "bg": { "value": "{color.neutral.100}", "type": "color" },
+        "surface": { "value": "{surface.surface.default}", "type": "color" },
+        "surfaceHover": { "value": "{surface.surface.hover}", "type": "color" },
+        "surfaceActive": { "value": "{surface.surface.active}", "type": "color" },
+        "border": { "value": "{surface.border.default}", "type": "color" },
+        "borderSubtle": { "value": "{surface.border.subtle}", "type": "color" },
+        "borderAccent": { "value": "{surface.border.accent}", "type": "color" },
+        "textPrimary": { "value": "{text.primary}", "type": "color" },
+        "textSecondary": { "value": "{text.secondary}", "type": "color" },
+        "textTertiary": { "value": "{text.tertiary}", "type": "color" },
+        "textAccent": { "value": "{text.accent}", "type": "color" },
+        "primary": { "value": "{interactive.primary.default}", "type": "color" },
+        "primaryHover": { "value": "{interactive.primary.hover}", "type": "color" },
+        "primaryActive": { "value": "{interactive.primary.active}", "type": "color" }
+      }
+    }
+  }
+}

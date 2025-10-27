@@ -1,0 +1,49 @@
+{
+  "font": {
+    "family": {
+      "sans": {
+        "value": "'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+        "type": "fontFamily"
+      },
+      "cjk": {
+        "value": "'Noto Sans SC Variable', 'PingFang SC', 'Microsoft YaHei', sans-serif",
+        "type": "fontFamily"
+      },
+      "mono": {
+        "value": "'JetBrains Mono Variable', 'SF Mono', Consolas, 'Courier New', monospace",
+        "type": "fontFamily"
+      }
+    },
+    "size": {
+      "xs": { "value": "0.75rem", "comment": "12px", "type": "dimension" },
+      "sm": { "value": "0.875rem", "comment": "14px", "type": "dimension" },
+      "base": { "value": "1rem", "comment": "16px", "type": "dimension" },
+      "lg": { "value": "1.125rem", "comment": "18px", "type": "dimension" },
+      "xl": { "value": "1.25rem", "comment": "20px", "type": "dimension" },
+      "2xl": { "value": "1.5rem", "comment": "24px", "type": "dimension" },
+      "3xl": { "value": "1.875rem", "comment": "30px", "type": "dimension" },
+      "4xl": { "value": "2.25rem", "comment": "36px", "type": "dimension" },
+      "5xl": { "value": "3rem", "comment": "48px", "type": "dimension" }
+    },
+    "weight": {
+      "light": { "value": "300", "type": "fontWeight" },
+      "normal": { "value": "400", "type": "fontWeight" },
+      "medium": { "value": "500", "type": "fontWeight" },
+      "semibold": { "value": "600", "type": "fontWeight" },
+      "bold": { "value": "700", "type": "fontWeight" }
+    },
+    "lineHeight": {
+      "tight": { "value": "1.25", "type": "number" },
+      "normal": { "value": "1.5", "type": "number" },
+      "relaxed": { "value": "1.75", "type": "number" },
+      "loose": { "value": "2", "type": "number" }
+    },
+    "letterSpacing": {
+      "tighter": { "value": "-0.05em", "type": "dimension" },
+      "tight": { "value": "-0.025em", "type": "dimension" },
+      "normal": { "value": "0", "type": "dimension" },
+      "wide": { "value": "0.025em", "type": "dimension" },
+      "wider": { "value": "0.05em", "type": "dimension" }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "interactive": {
+    "primary": {
+      "default": { "value": "{color.brand.teal.900}", "type": "color", "comment": "Using 900 for WCAG AA contrast with white text (4.5:1)" },
+      "hover": { "value": "{color.brand.teal.800}", "type": "color" },
+      "active": { "value": "{color.brand.teal.900}", "type": "color", "comment": "Same as default since 900 is darkest" },
+      "disabled": { "value": "{color.neutral.400}", "type": "color" }
+    },
+    "secondary": {
+      "default": { "value": "{color.neutral.300}", "type": "color" },
+      "hover": { "value": "{color.neutral.400}", "type": "color" },
+      "active": { "value": "{color.neutral.500}", "type": "color" },
+      "disabled": { "value": "{color.neutral.300}", "type": "color" }
+    },
+    "ghost": {
+      "default": { "value": "transparent", "type": "color" },
+      "hover": { "value": "{color.neutral.200}", "type": "color" },
+      "active": { "value": "{color.neutral.300}", "type": "color" }
+    },
+    "focus": {
+      "ring": { "value": "{color.brand.teal.500}", "type": "color" },
+      "ringOffset": { "value": "{color.neutral.100}", "type": "color" }
+    }
+  }
+}

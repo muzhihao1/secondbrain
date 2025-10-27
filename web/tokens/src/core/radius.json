@@ -1,0 +1,11 @@
+{
+  "radius": {
+    "none": { "value": "0", "type": "dimension" },
+    "sm": { "value": "0.25rem", "comment": "4px", "type": "dimension" },
+    "base": { "value": "0.5rem", "comment": "8px", "type": "dimension" },
+    "md": { "value": "0.75rem", "comment": "12px", "type": "dimension" },
+    "lg": { "value": "1rem", "comment": "16px", "type": "dimension" },
+    "xl": { "value": "1.5rem", "comment": "24px", "type": "dimension" },
+    "full": { "value": "9999px", "type": "dimension" }
+  }
+}

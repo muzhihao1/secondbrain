@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VNext Contrast Check Report</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: #121212;
+      color: #ffffff;
+    }
+    h1 { color: #00A9A5; }
+    .summary {
+      background: #1e1e1e;
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      margin-bottom: 2rem;
+      border: 2px solid #4CAF50;
+    }
+    .summary.pass { border-color: #4CAF50; }
+    .summary.fail { border-color: #F44336; }
+    .stat { display: inline-block; margin-right: 2rem; }
+    .stat-value { font-size: 2rem; font-weight: bold; }
+    .violations { margin-top: 2rem; }
+    .violation {
+      background: #1e1e1e;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 0.5rem;
+      border-left: 4px solid #F44336;
+    }
+    .color-swatch {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border-radius: 4px;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+      border: 1px solid #404040;
+    }
+    .ratio { font-size: 1.5rem; font-weight: bold; margin: 0.5rem 0; }
+    .ratio.fail { color: #F44336; }
+    .ratio.pass { color: #4CAF50; }
+    code { background: #2a2a2a; padding: 0.2rem 0.4rem; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <h1>🎨 VNext Contrast Check Report</h1>
+
+  <div class="summary pass">
+    <h2>✅ All Checks Passed</h2>
+    <div class="stat">
+      <div class="stat-value">11/11</div>
+      <div>Combinations Passed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value pass">0</div>
+      <div>Violations</div>
+    </div>
+  </div>
+
+  
+    <p>✅ All tested color combinations meet WCAG 2.2 Level AA contrast requirements.</p>
+  
+
+  <hr style="border-color: #404040; margin: 3rem 0;">
+
+  <h2>Tested Combinations</h2>
+  <ul>
+    <li>Primary, secondary, tertiary text on default background</li>
+    <li>Primary, secondary text on surface background</li>
+    <li>Semantic colors (success, warning, error, info) on dark backgrounds</li>
+    <li>Brand colors on backgrounds</li>
+    <li>Button text contrast (white on brand colors)</li>
+  </ul>
+
+  <p style="color: #9e9e9e; margin-top: 3rem;">
+    Generated: 10/27/2025, 1:43:30 AM<br>
+    Standards: WCAG 2.2 Level AA (4.5:1 for normal text, 3:1 for large text)
+  </p>
+</body>
+</html>

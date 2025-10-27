@@ -1,0 +1,1 @@
+let o;function u(t){o=t}function c(){if(!o)throw new Error("Function called outside component initialization");return o}function i(t){c().$$.on_mount.push(t)}function s(t,n){return c().$$.context.set(t,n),n}function a(t){return c().$$.context.get(t)}function l(t,n){const e=t.$$.callbacks[n.type];e&&e.slice().forEach(r=>r.call(this,n))}export{u as a,l as b,o as c,a as g,i as o,s};
