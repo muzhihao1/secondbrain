@@ -24,6 +24,7 @@
 
   import { onMount, onDestroy, createEventDispatcher } from 'svelte';
   import { fade, scale } from 'svelte/transition';
+  import { browser } from '$app/environment';
   import Portal from '../utilities/Portal.svelte';
 
   const dispatch = createEventDispatcher();
@@ -93,7 +94,7 @@
    * @returns {HTMLElement[]}
    */
   function getFocusableElements() {
-    if (!dialogElement) return [];
+    if (!browser || !dialogElement) return [];
 
     const focusableSelectors = [
       'a[href]',
@@ -112,7 +113,7 @@
    * @param {KeyboardEvent} event
    */
   function handleKeyDown(event) {
-    if (!open) return;
+    if (!browser || !open) return;
 
     // Handle ESC key
     if (event.key === 'Escape' && closeOnEsc) {
@@ -154,6 +155,8 @@
    * Lock body scroll when modal is open
    */
   function lockBodyScroll() {
+    if (!browser) return;
+
     // Save current scroll position
     const scrollY = window.scrollY;
     document.body.style.top = `-${scrollY}px`;
@@ -168,6 +171,8 @@
    * Unlock body scroll when modal is closed
    */
   function unlockBodyScroll() {
+    if (!browser) return;
+
     // Restore scroll position
     const scrollY = document.body.style.top;
     document.body.style.position = '';
@@ -181,7 +186,7 @@
    * Set initial focus when modal opens
    */
   function setInitialFocus() {
-    if (!dialogElement) return;
+    if (!browser || !dialogElement) return;
 
     const focusableElements = getFocusableElements();
 
@@ -231,7 +236,7 @@
   }
 
   // Lifecycle: Manage modal open/close state
-  $: if (open) {
+  $: if (browser && open) {
     // Save current focus
     previousActiveElement = document.activeElement;
 
@@ -245,7 +250,7 @@
 
     // Dispatch open event
     dispatch('open');
-  } else if (previousActiveElement) {
+  } else if (browser && previousActiveElement) {
     // Restore focus
     unlockBodyScroll();
 
@@ -270,7 +275,7 @@
   });
 </script>
 
-{#if open}
+{#if browser && open}
   <Portal>
     <!-- Backdrop -->
     <div

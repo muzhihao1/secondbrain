@@ -12,6 +12,8 @@
    * </Portal>
    */
 
+  import { browser } from '$app/environment';
+
   /**
    * Target element where content should be rendered
    * Defaults to document.body
@@ -25,6 +27,9 @@
    * @returns {{destroy: Function}}
    */
   function portal(node) {
+    // Skip on server-side
+    if (!browser) return { destroy: () => {} };
+
     const targetElement = target || document.body;
     targetElement.appendChild(node);
 
@@ -38,6 +43,12 @@
   }
 </script>
 
-<div use:portal>
-  <slot />
-</div>
+{#if browser}
+  <div use:portal>
+    <slot />
+  </div>
+{:else}
+  <div>
+    <slot />
+  </div>
+{/if}
