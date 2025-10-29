@@ -1,0 +1,21 @@
+{
+  "surface": {
+    "bg": {
+      "default": { "value": "{color.neutral.100}", "type": "color" },
+      "elevated": { "value": "{color.neutral.300}", "type": "color" },
+      "overlay": { "value": "{color.neutral.0}", "type": "color" }
+    },
+    "surface": {
+      "default": { "value": "{color.neutral.300}", "type": "color" },
+      "hover": { "value": "{color.neutral.400}", "type": "color" },
+      "active": { "value": "{color.neutral.500}", "type": "color" },
+      "selected": { "value": "{color.brand.teal.900}", "type": "color" }
+    },
+    "border": {
+      "default": { "value": "{color.neutral.400}", "type": "color" },
+      "strong": { "value": "{color.neutral.500}", "type": "color" },
+      "subtle": { "value": "{color.neutral.400}", "type": "color" },
+      "accent": { "value": "{color.brand.teal.500}", "type": "color" }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+@import './lib/styles/tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	body {
+		@apply bg-background-primary text-text-primary;
+		font-family: 'Inter', system-ui, -apple-system, sans-serif;
+	}
+}
+
+@layer utilities {
+	.touch-target {
+		min-height: 44px;
+		min-width: 44px;
+	}
+}

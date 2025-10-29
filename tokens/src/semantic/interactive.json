@@ -1,0 +1,25 @@
+{
+  "interactive": {
+    "primary": {
+      "default": { "value": "{color.brand.teal.500}", "type": "color", "comment": "Bright cyan matching mockup design #00A9A5" },
+      "hover": { "value": "{color.brand.teal.600}", "type": "color" },
+      "active": { "value": "{color.brand.teal.700}", "type": "color" },
+      "disabled": { "value": "{color.neutral.400}", "type": "color" }
+    },
+    "secondary": {
+      "default": { "value": "{color.neutral.300}", "type": "color" },
+      "hover": { "value": "{color.neutral.400}", "type": "color" },
+      "active": { "value": "{color.neutral.500}", "type": "color" },
+      "disabled": { "value": "{color.neutral.300}", "type": "color" }
+    },
+    "ghost": {
+      "default": { "value": "transparent", "type": "color" },
+      "hover": { "value": "{color.neutral.200}", "type": "color" },
+      "active": { "value": "{color.neutral.300}", "type": "color" }
+    },
+    "focus": {
+      "ring": { "value": "{color.brand.teal.500}", "type": "color" },
+      "ringOffset": { "value": "{color.neutral.100}", "type": "color" }
+    }
+  }
+}
