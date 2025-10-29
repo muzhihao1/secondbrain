@@ -1,15 +1,15 @@
 {
   "text": {
-    "primary": { "value": "{color.neutral.1000}", "type": "color" },
-    "secondary": { "value": "{color.neutral.700}", "type": "color" },
-    "tertiary": { "value": "{color.neutral.600}", "type": "color" },
-    "disabled": { "value": "{color.neutral.500}", "type": "color" },
-    "inverse": { "value": "{color.neutral.100}", "type": "color" },
-    "accent": { "value": "{color.brand.teal.500}", "type": "color" },
-    "accentHover": { "value": "{color.brand.teal.400}", "type": "color" },
-    "success": { "value": "{color.semantic.success.500}", "type": "color" },
-    "warning": { "value": "{color.semantic.warning.500}", "type": "color" },
-    "error": { "value": "{color.semantic.error.500}", "type": "color" },
-    "info": { "value": "{color.semantic.info.500}", "type": "color" }
+    "primary": { "value": "{color.neutral.900}", "type": "color", "comment": "#F5F5F5 - Headings and emphasis" },
+    "secondary": { "value": "{color.neutral.800}", "type": "color", "comment": "#D4D4D4 - Regular text" },
+    "tertiary": { "value": "{color.neutral.700}", "type": "color", "comment": "#A3A3A3 - Secondary text" },
+    "disabled": { "value": "{color.neutral.600}", "type": "color", "comment": "#6B6B6B - Disabled text" },
+    "inverse": { "value": "{color.neutral.100}", "type": "color", "comment": "Text on colored backgrounds" },
+    "brand": { "value": "{color.brand.primary.500}", "type": "color", "comment": "Brand color text" },
+    "brandHover": { "value": "{color.brand.primary.400}", "type": "color", "comment": "Brand color hover" },
+    "success": { "value": "{color.semantic.success.500}", "type": "color", "comment": "Success messages" },
+    "warning": { "value": "{color.semantic.warning.500}", "type": "color", "comment": "Warning messages" },
+    "error": { "value": "{color.semantic.error.500}", "type": "color", "comment": "Error messages" },
+    "info": { "value": "{color.semantic.info.500}", "type": "color", "comment": "Info messages" }
   }
 }

@@ -69,7 +69,7 @@
     {#if $hasPendingSync}
       <button
         on:click={() => captureStore.syncOfflineCaptures()}
-        class="px-3 py-1.5 bg-yellow-500/20 backdrop-blur-sm border border-yellow-500/30 text-yellow-400 rounded-lg text-sm font-medium hover:bg-yellow-500/30 transition-all duration-200 active:scale-95"
+        class="px-3 py-1.5 bg-[var(--color-semantic-warning-500)]/20 backdrop-blur-sm border border-[var(--color-semantic-warning-500)]/30 text-[var(--color-semantic-warning-500)] rounded-lg text-sm font-medium hover:bg-[var(--color-semantic-warning-500)]/30 transition-all duration-200 active:scale-95"
       >
         🔄 {$syncStore.pendingCount}
       </button>
@@ -88,7 +88,7 @@
       bind:value={content}
       on:keydown={handleKeydown}
       placeholder="记录你的想法...&#10;&#10;⌘ + Enter 快速提交"
-      class="flex-1 w-full p-4 bg-white/5 border rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 resize-none transition-all duration-200"
+      class="flex-1 w-full p-4 bg-white/5 border rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-[var(--color-brand-primary-500)] focus:ring-2 focus:ring-[var(--color-brand-primary-500)]/20 resize-none transition-all duration-200"
       style="border-color: var(--surface-border-default); min-height: 300px;"
       rows="10"
     />
@@ -99,7 +99,7 @@
       <button
         on:click={handleCapture}
         disabled={!content.trim() || $captureStore.loading}
-        class="flex-1 py-4 px-6 bg-cyan-500 hover:bg-cyan-600 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all duration-200 active:scale-95 focus-visible:ring-2 focus-visible:ring-cyan-500"
+        class="flex-1 py-4 px-6 bg-[var(--color-brand-primary-500)] hover:bg-[var(--color-brand-primary-600)] disabled:bg-[var(--color-neutral-600)] disabled:text-[var(--color-neutral-400)] disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all duration-200 active:scale-95 focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary-500)]"
       >
         {$captureStore.loading ? '保存中...' : '💾 保存'}
       </button>
@@ -108,8 +108,8 @@
       <button
         on:click={toggleRecording}
         class="px-6 py-4 rounded-lg font-semibold transition-all duration-200 active:scale-95 focus-visible:ring-2 {isRecording
-          ? 'bg-red-500 hover:bg-red-600 text-white focus-visible:ring-red-500'
-          : 'bg-white/5 border text-white hover:bg-white/10 focus-visible:ring-cyan-500'}"
+          ? 'bg-[var(--color-semantic-error-500)] hover:bg-[var(--color-semantic-error-700)] text-white focus-visible:ring-[var(--color-semantic-error-500)]'
+          : 'bg-white/5 border text-white hover:bg-white/10 focus-visible:ring-[var(--color-brand-primary-500)]'}"
         style={!isRecording ? 'border-color: var(--surface-border-default);' : ''}
       >
         {#if isRecording}
@@ -132,9 +132,9 @@
     <!-- Success Message -->
     {#if $captureStore.lastCapture}
       <div
-        class="mt-4 p-4 bg-green-500/10 backdrop-blur-sm border border-green-500/20 rounded-lg text-center"
+        class="mt-4 p-4 bg-[var(--color-semantic-success-500)]/10 backdrop-blur-sm border border-[var(--color-semantic-success-500)]/20 rounded-lg text-center"
       >
-        <p class="text-green-400 font-medium">✅ 已保存到 Obsidian</p>
+        <p class="text-[var(--color-semantic-success-500)] font-medium">✅ 已保存到 Obsidian</p>
       </div>
     {/if}
   </div>

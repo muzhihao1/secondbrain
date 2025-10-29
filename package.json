@@ -45,6 +45,7 @@
     "eslint-plugin-svelte": "^2.35.1",
     "jest-axe": "^10.0.0",
     "jsdom": "^27.0.1",
+    "json5": "^2.2.3",
     "lighthouse": "^12.8.2",
     "postcss": "^8.4.33",
     "prettier": "^3.1.1",
@@ -60,6 +61,8 @@
   },
   "dependencies": {
     "chart.js": "^4.4.1",
-    "idb": "^8.0.0"
+    "idb": "^8.0.0",
+    "lucide-svelte": "^0.548.0",
+    "marked": "^16.4.1"
   }
 }

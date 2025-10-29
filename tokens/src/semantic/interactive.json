@@ -1,25 +1,25 @@
 {
   "interactive": {
     "primary": {
-      "default": { "value": "{color.brand.teal.500}", "type": "color", "comment": "Bright cyan matching mockup design #00A9A5" },
-      "hover": { "value": "{color.brand.teal.600}", "type": "color" },
-      "active": { "value": "{color.brand.teal.700}", "type": "color" },
-      "disabled": { "value": "{color.neutral.400}", "type": "color" }
+      "default": { "value": "{color.brand.primary.500}", "type": "color", "comment": "PRIMARY buttons - Cyan #00A9A5" },
+      "hover": { "value": "{color.brand.primary.600}", "type": "color", "comment": "Primary hover state" },
+      "active": { "value": "{color.brand.primary.700}", "type": "color", "comment": "Primary active/pressed" },
+      "disabled": { "value": "{color.neutral.500}", "type": "color", "comment": "Disabled button" }
     },
     "secondary": {
-      "default": { "value": "{color.neutral.300}", "type": "color" },
-      "hover": { "value": "{color.neutral.400}", "type": "color" },
-      "active": { "value": "{color.neutral.500}", "type": "color" },
-      "disabled": { "value": "{color.neutral.300}", "type": "color" }
+      "default": { "value": "{color.neutral.300}", "type": "color", "comment": "Secondary buttons" },
+      "hover": { "value": "{color.neutral.400}", "type": "color", "comment": "Secondary hover" },
+      "active": { "value": "{color.neutral.500}", "type": "color", "comment": "Secondary active" },
+      "disabled": { "value": "{color.neutral.600}", "type": "color", "comment": "Disabled secondary" }
     },
     "ghost": {
-      "default": { "value": "transparent", "type": "color" },
-      "hover": { "value": "{color.neutral.200}", "type": "color" },
-      "active": { "value": "{color.neutral.300}", "type": "color" }
+      "default": { "value": "transparent", "type": "color", "comment": "Ghost/text buttons" },
+      "hover": { "value": "{color.neutral.200}", "type": "color", "comment": "Ghost hover" },
+      "active": { "value": "{color.neutral.300}", "type": "color", "comment": "Ghost active" }
     },
     "focus": {
-      "ring": { "value": "{color.brand.teal.500}", "type": "color" },
-      "ringOffset": { "value": "{color.neutral.100}", "type": "color" }
+      "ring": { "value": "{color.brand.primary.500}", "type": "color", "comment": "Focus ring color" },
+      "ringOffset": { "value": "{color.neutral.100}", "type": "color", "comment": "Focus ring offset" }
     }
   }
 }

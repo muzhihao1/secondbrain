@@ -1,21 +1,24 @@
 {
   "surface": {
     "bg": {
-      "default": { "value": "{color.neutral.100}", "type": "color" },
-      "elevated": { "value": "{color.neutral.300}", "type": "color" },
-      "overlay": { "value": "{color.neutral.0}", "type": "color" }
-    },
-    "surface": {
-      "default": { "value": "{color.neutral.300}", "type": "color" },
-      "hover": { "value": "{color.neutral.400}", "type": "color" },
-      "active": { "value": "{color.neutral.500}", "type": "color" },
-      "selected": { "value": "{color.brand.teal.900}", "type": "color" }
+      "primary": { "value": "{color.neutral.100}", "type": "color", "comment": "#121212 - Primary background" },
+      "secondary": { "value": "{color.neutral.200}", "type": "color", "comment": "#1E1E1E - Card background" },
+      "elevated": { "value": "{color.neutral.300}", "type": "color", "comment": "#282828 - Elevated elements" },
+      "hover": { "value": "{color.neutral.400}", "type": "color", "comment": "#333333 - Hover background" },
+      "overlay": { "value": "{color.neutral.0}", "type": "color", "comment": "Modals and overlays" }
     },
     "border": {
-      "default": { "value": "{color.neutral.400}", "type": "color" },
-      "strong": { "value": "{color.neutral.500}", "type": "color" },
-      "subtle": { "value": "{color.neutral.400}", "type": "color" },
-      "accent": { "value": "{color.brand.teal.500}", "type": "color" }
+      "default": { "value": "{color.neutral.500}", "type": "color", "comment": "#404040 - Default borders" },
+      "subtle": { "value": "{color.neutral.300}", "type": "color", "comment": "Subtle dividers" },
+      "strong": { "value": "{color.neutral.600}", "type": "color", "comment": "Emphasized borders" },
+      "focus": { "value": "{color.brand.primary.500}", "type": "color", "comment": "Focus rings" },
+      "error": { "value": "{color.semantic.error.500}", "type": "color", "comment": "Error borders" }
+    },
+    "interactive": {
+      "default": { "value": "{color.neutral.200}", "type": "color", "comment": "Default interactive elements" },
+      "hover": { "value": "{color.neutral.300}", "type": "color", "comment": "Hover state" },
+      "active": { "value": "{color.neutral.400}", "type": "color", "comment": "Active/pressed state" },
+      "selected": { "value": "{color.brand.primary.900}", "type": "color", "comment": "Selected state" }
     }
   }
 }

@@ -2,20 +2,20 @@
   "vnext": {
     "dark": {
       "color": {
-        "bg": { "value": "{color.neutral.100}", "type": "color" },
-        "surface": { "value": "{surface.surface.default}", "type": "color" },
-        "surfaceHover": { "value": "{surface.surface.hover}", "type": "color" },
-        "surfaceActive": { "value": "{surface.surface.active}", "type": "color" },
-        "border": { "value": "{surface.border.default}", "type": "color" },
-        "borderSubtle": { "value": "{surface.border.subtle}", "type": "color" },
-        "borderAccent": { "value": "{surface.border.accent}", "type": "color" },
-        "textPrimary": { "value": "{text.primary}", "type": "color" },
-        "textSecondary": { "value": "{text.secondary}", "type": "color" },
-        "textTertiary": { "value": "{text.tertiary}", "type": "color" },
-        "textAccent": { "value": "{text.accent}", "type": "color" },
-        "primary": { "value": "{interactive.primary.default}", "type": "color" },
-        "primaryHover": { "value": "{interactive.primary.hover}", "type": "color" },
-        "primaryActive": { "value": "{interactive.primary.active}", "type": "color" }
+        "bg": { "value": "{color.neutral.100}", "type": "color", "comment": "Primary background #121212" },
+        "surface": { "value": "{surface.interactive.default}", "type": "color", "comment": "Interactive surface" },
+        "surfaceHover": { "value": "{surface.interactive.hover}", "type": "color", "comment": "Interactive hover" },
+        "surfaceActive": { "value": "{surface.interactive.active}", "type": "color", "comment": "Interactive active" },
+        "border": { "value": "{surface.border.default}", "type": "color", "comment": "Default borders" },
+        "borderSubtle": { "value": "{surface.border.subtle}", "type": "color", "comment": "Subtle dividers" },
+        "borderAccent": { "value": "{surface.border.focus}", "type": "color", "comment": "Focus/accent borders" },
+        "textPrimary": { "value": "{text.primary}", "type": "color", "comment": "Primary text" },
+        "textSecondary": { "value": "{text.secondary}", "type": "color", "comment": "Secondary text" },
+        "textTertiary": { "value": "{text.tertiary}", "type": "color", "comment": "Tertiary text" },
+        "textAccent": { "value": "{text.brand}", "type": "color", "comment": "Brand/accent text" },
+        "primary": { "value": "{interactive.primary.default}", "type": "color", "comment": "Primary button" },
+        "primaryHover": { "value": "{interactive.primary.hover}", "type": "color", "comment": "Primary hover" },
+        "primaryActive": { "value": "{interactive.primary.active}", "type": "color", "comment": "Primary active" }
       }
     }
   }

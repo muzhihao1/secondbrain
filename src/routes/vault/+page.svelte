@@ -1,170 +1,127 @@
 <script>
   /**
-   * Vault (知识库) Page - Unified Design
+   * Vault (知识库) Page - Complete Three-Column Knowledge Management System
    *
-   * 重构为使用统一的Card设计系统，移除渐变色，采用深色主题+青色accent
+   * 实现完整的三栏式笔记管理界面:
+   * - 左栏: 文件夹树 (FolderTree)
+   * - 中栏: 笔记列表 (NoteList)
+   * - 右栏: 笔记编辑器 (NoteEditor)
    */
 
-  import PageLayout from '$lib/components/layout/PageLayout.svelte';
-  import Card from '$lib/components/composite/Card.svelte';
-  import Heading from '$lib/components/primitives/Heading.svelte';
-  import Text from '$lib/components/primitives/Text.svelte';
-  import Stack from '$lib/components/primitives/Stack.svelte';
-  import Inline from '$lib/components/primitives/Inline.svelte';
-  import Button from '$lib/components/primitives/Button.svelte';
-  import { obsidianApiClient } from '$services/obsidianApiClient.js';
+  import FolderTree from '$lib/components/vault/FolderTree.svelte';
+  import NoteList from '$lib/components/vault/NoteList.svelte';
+  import NoteEditor from '$lib/components/vault/NoteEditor.svelte';
+  import { vaultActions } from '$lib/stores/vault';
   import { onMount } from 'svelte';
 
-  let searchQuery = '';
-  let recentNotes = [];
-  let loading = true;
-  let error = null;
-
-  const quickLinks = [
-    {
-      title: '今日日志',
-      icon: '📅',
-      path: getTodayJournalPath(),
-      description: '查看或编辑今天的工作日志'
-    },
-    {
-      title: '项目文件夹',
-      icon: '🚀',
-      path: '01_Execution/Projects',
-      description: '浏览所有活跃项目'
-    },
-    {
-      title: '想法收集',
-      icon: '💡',
-      path: '01_Execution/Ideas',
-      description: '灵感和创意笔记'
-    },
-    {
-      title: '知识库',
-      icon: '📚',
-      path: '00_Foundation/Knowledge_Base',
-      description: '核心参考资料和学习内容'
-    }
-  ];
-
-  const upcomingFeatures = [
-    '文件夹浏览器',
-    'Markdown查看和编辑',
-    '全文搜索',
-    '最近访问记录',
-    '标签过滤',
-    '笔记链接图谱'
-  ];
-
-  function getTodayJournalPath() {
-    const today = new Date().toISOString().split('T')[0];
-    const year = today.substring(0, 4);
-    return `01_Execution/Daily_Operations/Logs/Journal_Entries/${year}/${today}-工作日志.md`;
-  }
-
   onMount(async () => {
-    try {
-      // TODO: Implement recent notes fetching
-      recentNotes = [];
-      loading = false;
-    } catch (err) {
-      error = err.message;
-      loading = false;
-    }
+    // Load notes from IndexedDB on mount
+    await vaultActions.loadNotes();
   });
-
-  async function openNote(path) {
-    try {
-      const content = await obsidianApiClient.readNote(path);
-      // TODO: Navigate to note viewer page
-      alert(`功能开发中\n\n路径: ${path}\n\n内容长度: ${content.length} 字符`);
-    } catch (err) {
-      alert(`无法打开笔记: ${err.message}`);
-    }
-  }
 </script>
 
 <svelte:head>
   <title>知识库 - VNext</title>
 </svelte:head>
 
-<PageLayout title="知识库" maxWidth="7xl" padding="md">
-  <Stack spacing="8">
-    <!-- Page Description -->
-    <Text size="lg" color="secondary">
-      浏览和管理您的Obsidian Vault
-    </Text>
-
-    <!-- Search Bar -->
-    <div class="relative">
-      <input
-        type="text"
-        bind:value={searchQuery}
-        placeholder="搜索笔记..."
-        class="w-full px-4 py-3 pl-12 rounded-lg border bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 transition-colors"
-        style="border-color: var(--surface-border-default);"
-      />
-      <span class="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 text-xl">
-        🔍
-      </span>
+<div class="vault-container" style="background: var(--surface-bg-primary);">
+  <!-- Three-Column Layout -->
+  <div class="vault-grid">
+    <!-- Left Column: Folder Tree -->
+    <div class="vault-column vault-column-left">
+      <FolderTree />
     </div>
 
-    <!-- Quick Links - 2x2 Grid -->
-    <div>
-      <Heading level={2} size="xl" class="text-white mb-4">快速访问</Heading>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {#each quickLinks as link}
-          <Card variant="elevated" size="md" interactive on:click={() => openNote(link.path)}>
-            <Stack spacing="3">
-              <div class="text-4xl">{link.icon}</div>
-              <div>
-                <Heading level={3} size="lg" class="text-white mb-1">
-                  {link.title}
-                </Heading>
-                <Text size="sm" color="secondary">
-                  {link.description}
-                </Text>
-              </div>
-            </Stack>
-          </Card>
-        {/each}
-      </div>
+    <!-- Middle Column: Note List -->
+    <div class="vault-column vault-column-middle">
+      <NoteList />
     </div>
 
-    <!-- Features Coming Soon -->
-    <Card variant="outlined" size="lg">
-      <Stack spacing="4">
-        <Inline spacing="2" align="center">
-          <span class="text-2xl">🚧</span>
-          <Heading level={3} size="lg" class="text-white">开发中的功能</Heading>
-        </Inline>
-        <ul class="space-y-2">
-          {#each upcomingFeatures as feature}
-            <li class="text-white/70 text-sm">• {feature}</li>
-          {/each}
-        </ul>
-      </Stack>
-    </Card>
-
-    <!-- Help Info -->
-    <Card variant="filled" size="md">
-      <Stack spacing="3">
-        <Inline spacing="2" align="center">
-          <span class="text-xl">💡</span>
-          <Heading level={4} size="md" class="text-white">提示</Heading>
-        </Inline>
-        <Text size="sm" color="secondary">
-          知识库功能正在开发中。目前您可以通过工作流创建和更新笔记，完整的浏览和编辑功能即将推出。
-        </Text>
-      </Stack>
-    </Card>
-
-  </Stack>
-</PageLayout>
+    <!-- Right Column: Note Editor -->
+    <div class="vault-column vault-column-right">
+      <NoteEditor />
+    </div>
+  </div>
+</div>
 
 <style>
-  /* Custom scrollbar for inputs if needed */
-  input::-webkit-scrollbar {
-    display: none;
+  .vault-container {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+
+  .vault-grid {
+    display: grid;
+    grid-template-columns: 240px 320px 1fr;
+    grid-template-rows: 100vh;
+    width: 100%;
+    height: 100%;
+  }
+
+  .vault-column {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .vault-column-left {
+    border-right: 1px solid var(--surface-border-default);
+  }
+
+  .vault-column-middle {
+    border-right: 1px solid var(--surface-border-default);
+  }
+
+  .vault-column-right {
+    /* No border - rightmost column */
+  }
+
+  /* Responsive Design */
+  @media (max-width: 1024px) {
+    .vault-grid {
+      grid-template-columns: 200px 280px 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .vault-grid {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto 1fr;
+    }
+
+    .vault-column {
+      height: auto;
+      max-height: 100vh;
+    }
+
+    .vault-column-left {
+      border-right: none;
+      border-bottom: 1px solid var(--surface-border-default);
+      max-height: 30vh;
+    }
+
+    .vault-column-middle {
+      border-right: none;
+      border-bottom: 1px solid var(--surface-border-default);
+      max-height: 40vh;
+    }
+
+    .vault-column-right {
+      height: 100vh;
+      flex: 1;
+    }
+  }
+
+  /* Ensure content doesn't overflow */
+  :global(.vault-column > *) {
+    height: 100%;
+    overflow: hidden;
   }
 </style>

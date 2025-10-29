@@ -2,6 +2,7 @@
 	/**
 	 * BottomNav - 移动端底部导航栏
 	 * 使用统一的navItems配置，通过page store判断当前页面
+	 * 使用Lucide Icons替代Emoji
 	 */
 
 	import { page } from '$app/stores';
@@ -23,6 +24,7 @@
 >
 	<div class="flex justify-around items-center h-16 px-2">
 		{#each navItems as item (item.id)}
+			{@const IconComponent = item.icon}
 			<a
 				href={item.href}
 				class="flex flex-col items-center justify-center gap-0.5 min-w-[60px] py-2 px-3 rounded-lg transition-all duration-200 ease-apple"
@@ -34,7 +36,7 @@
 				class:active:scale-95={true}
 				aria-current={isActive(item.href) ? 'page' : undefined}
 			>
-				<span class="text-2xl leading-none">{item.icon}</span>
+				<svelte:component this={IconComponent} size={20} strokeWidth={2} class="shrink-0" />
 				<span class="text-caption font-medium leading-tight">{item.label}</span>
 			</a>
 		{/each}

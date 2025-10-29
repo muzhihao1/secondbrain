@@ -3,6 +3,7 @@
    * Home Dashboard - 真正的卡片式设计
    *
    * 使用Card组件创建2x2网格布局，完全匹配mockup
+   * 使用 Lucide Icons 替代 Emoji
    */
 
   import { goto } from '$app/navigation';
@@ -13,6 +14,7 @@
   import Button from '$lib/components/primitives/Button.svelte';
   import Inline from '$lib/components/primitives/Inline.svelte';
   import Stack from '$lib/components/primitives/Stack.svelte';
+  import { documentIcons, workflowIcons } from '$lib/config/iconMap';
 
   // Recent notes data
   let recentNotes = [
@@ -22,12 +24,12 @@
     'Project requirements'
   ];
 
-  // Workflow shortcuts
+  // Workflow shortcuts with Lucide icons
   let workflowShortcuts = [
-    { id: 'document', icon: '📄', label: 'Documents' },
-    { id: 'upload', icon: '⬆️', label: 'Upload' },
-    { id: 'checklist', icon: '📋', label: 'Checklist' },
-    { id: 'grid', icon: '⊞', label: 'Grid View' }
+    { id: 'document', icon: documentIcons.text, label: 'Documents' },
+    { id: 'upload', icon: documentIcons.upload, label: 'Upload' },
+    { id: 'checklist', icon: workflowIcons.checklist, label: 'Checklist' },
+    { id: 'grid', icon: workflowIcons.grid, label: 'Grid View' }
   ];
 
   // Today's dates
@@ -71,27 +73,28 @@
   <!-- 2x2 Card Grid - Using CSS Grid with proper constraints -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 auto-rows-fr">
 
-      <!-- 1. Smart Capture Card (Top Left) -->
-      <Card variant="elevated" size="lg" interactive>
+      <!-- 1. Quick Capture Card (Top Left) -->
+      <Card variant="elevated" size="lg" interactive on:click={handleAddCapture}>
         <svelte:fragment slot="header">
-          <Heading level={2} size="xl" class="text-white">Smart capture</Heading>
+          <Heading level={2} size="xl" class="text-white">Quick Capture</Heading>
         </svelte:fragment>
 
         <Stack spacing="4">
-          <Inline spacing="3">
-            <input
-              type="text"
-              placeholder="Search"
-              class="flex-1 px-4 py-3 rounded-lg border border-white/10 bg-white/5 text-white placeholder-white/40 focus:outline-none focus:border-cyan-500 transition-colors"
+          <Text size="md" class="text-white/60">
+            Capture your thoughts, ideas, and notes instantly
+          </Text>
+
+          <div class="flex items-center justify-between pt-4 border-t border-white/10">
+            <Text size="sm" class="text-white/40">
+              Press <kbd class="px-2 py-1 bg-white/10 rounded text-xs font-mono">⌘N</kbd> or click to start
+            </Text>
+            <svelte:component
+              this={documentIcons.text}
+              size={32}
+              stroke-width={1.5}
+              class="text-brand-primary-500 opacity-60"
             />
-            <Button
-              variant="primary"
-              size="md"
-              on:click={handleAddCapture}
-            >
-              Add
-            </Button>
-          </Inline>
+          </div>
         </Stack>
       </Card>
 
@@ -156,12 +159,18 @@
 
         <div class="grid grid-cols-2 gap-4">
           {#each workflowShortcuts as workflow}
+            {@const IconComponent = workflow.icon}
             <button
               on:click={() => handleWorkflowClick(workflow.id)}
-              class="aspect-square rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-v-primary/50 flex items-center justify-center text-4xl transition-all hover:scale-105 active:scale-95"
+              class="aspect-square rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-v-primary/50 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
               aria-label={workflow.label}
             >
-              {workflow.icon}
+              <svelte:component
+                this={IconComponent}
+                size={32}
+                stroke-width={1.5}
+                class="text-white/70 hover:text-white shrink-0"
+              />
             </button>
           {/each}
         </div>
