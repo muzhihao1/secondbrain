@@ -269,20 +269,32 @@ class DBService {
 			countRequest.onsuccess = () => {
 				const total = countRequest.result;
 
-				const syncedIndex = objectStore.index('synced');
-				// Use IDBKeyRange.only() to create a proper key range
-				const unsyncedRequest = syncedIndex.count(IDBKeyRange.only(false));
+				// Use cursor to handle records with missing 'synced' field
+				// This is safer than IDBKeyRange.only(false) which fails on undefined values
+				let unsyncedCount = 0;
+				const cursorRequest = objectStore.openCursor();
 
-				unsyncedRequest.onsuccess = () => {
-					resolve({
-						total,
-						unsynced: unsyncedRequest.result,
-						synced: total - unsyncedRequest.result
-					});
+				cursorRequest.onsuccess = (event) => {
+					const cursor = event.target.result;
+					if (cursor) {
+						// Count as unsynced if synced is false or undefined
+						if (cursor.value.synced !== true) {
+							unsyncedCount++;
+						}
+						cursor.continue();
+					} else {
+						// Done counting
+						resolve({
+							total,
+							unsynced: unsyncedCount,
+							synced: total - unsyncedCount
+						});
+					}
 				};
 
-				unsyncedRequest.onerror = () => {
-					reject(unsyncedRequest.error);
+				cursorRequest.onerror = () => {
+					console.error('Failed to count unsynced items:', cursorRequest.error);
+					reject(cursorRequest.error);
 				};
 			};
 
