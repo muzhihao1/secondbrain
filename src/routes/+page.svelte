@@ -6,6 +6,7 @@
    * 使用 Lucide Icons 替代 Emoji
    */
 
+  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import PageLayout from '$lib/components/layout/PageLayout.svelte';
   import Card from '$lib/components/composite/Card.svelte';
@@ -15,14 +16,11 @@
   import Inline from '$lib/components/primitives/Inline.svelte';
   import Stack from '$lib/components/primitives/Stack.svelte';
   import { documentIcons, workflowIcons } from '$lib/config/iconMap';
+  import { obsidianApiClient } from '$lib/services/obsidianApiClient.js';
 
-  // Recent notes data
-  let recentNotes = [
-    'Meeting summary',
-    'Research ideas',
-    'Todo list',
-    'Project requirements'
-  ];
+  // Recent notes data (will be loaded from vault)
+  let recentNotes = [];
+  let loadingNotes = true;
 
   // Workflow shortcuts with Lucide icons
   let workflowShortcuts = [
@@ -44,6 +42,31 @@
     });
   }
 
+  /**
+   * Load recent notes from Obsidian vault on mount
+   */
+  async function loadRecentNotes() {
+    try {
+      loadingNotes = true;
+      const timeline = await obsidianApiClient.getTimeline({ limit: 4 });
+
+      if (timeline && Array.isArray(timeline.items)) {
+        recentNotes = timeline.items.map(item => ({
+          title: item.title,
+          path: item.file_path,
+          created: item.created,
+          location: item.location
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to load recent notes:', error);
+      // Fallback to empty array on error
+      recentNotes = [];
+    } finally {
+      loadingNotes = false;
+    }
+  }
+
   // Handlers
   function handleAddCapture() {
     goto('/capture');
@@ -51,6 +74,7 @@
 
   function handleAddTask() {
     console.log('Add task clicked');
+    // TODO: Implement task creation
   }
 
   function handleWorkflowClick(id) {
@@ -74,9 +98,14 @@
 
   function handleNoteClick(note) {
     console.log('Note clicked:', note);
-    // Navigate to vault to view note
-    goto('/vault');
+    // Navigate to timeline or vault to view note
+    goto('/timeline');
   }
+
+  // Load data on mount
+  onMount(() => {
+    loadRecentNotes();
+  });
 </script>
 
 <svelte:head>
@@ -154,14 +183,39 @@
         </svelte:fragment>
 
         <Stack spacing="2">
-          {#each recentNotes as note}
-            <button
-              on:click={() => handleNoteClick(note)}
-              class="w-full text-left px-3 py-2 rounded-lg text-white/70 hover:text-white hover:bg-white/5 transition-all text-sm"
-            >
-              • {note}
-            </button>
-          {/each}
+          {#if loadingNotes}
+            <div class="text-center py-4">
+              <p class="text-white/40 text-sm">Loading...</p>
+            </div>
+          {:else if recentNotes.length === 0}
+            <div class="text-center py-4">
+              <p class="text-white/40 text-sm">No notes yet</p>
+              <button
+                on:click={handleAddCapture}
+                class="mt-2 text-v-primary hover:text-v-primary-hover text-sm"
+              >
+                Start capturing →
+              </button>
+            </div>
+          {:else}
+            {#each recentNotes as note}
+              <button
+                on:click={() => handleNoteClick(note)}
+                class="w-full text-left px-3 py-2 rounded-lg text-white/70 hover:text-white hover:bg-white/5 transition-all text-sm flex items-center gap-2"
+              >
+                <span class="text-xs">
+                  {#if note.location === '00_Capture/Inbox'}
+                    📥
+                  {:else if note.location === '01_Periodic/Daily'}
+                    📅
+                  {:else}
+                    •
+                  {/if}
+                </span>
+                <span class="flex-1 truncate">{note.title}</span>
+              </button>
+            {/each}
+          {/if}
         </Stack>
       </Card>
 

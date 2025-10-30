@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import { dbService } from '$services/dbService.js';
+	import { obsidianApiClient } from '$services/obsidianApiClient.js';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 
 	let captures = [];
@@ -8,34 +8,82 @@
 	let error = null;
 	let selectedCapture = null;
 
-	// Load all captures
+	/**
+	 * Load timeline data from Obsidian vault
+	 * Aggregates content from:
+	 * - 00_Capture/Inbox (quick captures)
+	 * - 01_Periodic/Daily (daily journal entries)
+	 */
 	async function loadCaptures() {
 		loading = true;
 		error = null;
 
 		try {
-			captures = await dbService.getAllCaptures(100);
+			// Use obsidianApiClient.getTimeline() to get aggregated vault content
+			const timeline = await obsidianApiClient.getTimeline({ limit: 100 });
+
+			// Transform timeline items to match the expected captures format
+			if (timeline && Array.isArray(timeline.items)) {
+				captures = timeline.items.map((item, index) => ({
+					id: `${item.file_path}-${index}`, // Generate unique ID
+					content: '', // Will be loaded on demand when detail is viewed
+					file_path: item.file_path,
+					title: item.title,
+					timestamp: new Date(item.created).getTime() || Date.now(),
+					input_type: 'text',
+					synced: true, // Data comes directly from vault
+					offline: false,
+					location: item.location // Track which folder it's from
+				}));
+			} else {
+				captures = [];
+			}
 		} catch (err) {
-			console.error('Failed to load captures:', err);
-			error = err.message;
+			console.error('Failed to load timeline:', err);
+			error = err.message || '无法加载时间线数据';
+			captures = [];
 		} finally {
 			loading = false;
 		}
 	}
 
-	// Delete a capture
-	async function handleDelete(id) {
-		if (!confirm('确定要删除这条记录吗？')) {
+	/**
+	 * Load the full content of a capture when detail is viewed
+	 */
+	async function loadCaptureContent(capture) {
+		if (capture.content) {
+			// Content already loaded
+			selectedCapture = capture;
 			return;
 		}
 
 		try {
-			await dbService.deleteCapture(id);
-			captures = captures.filter((c) => c.id !== id);
+			// Load the full note content from Obsidian
+			const content = await obsidianApiClient.readNote(capture.file_path);
+			capture.content = content;
+			selectedCapture = capture;
+		} catch (err) {
+			console.error('Failed to load note content:', err);
+			error = `无法加载笔记内容: ${err.message}`;
+		}
+	}
+
+	/**
+	 * Delete a capture file from vault
+	 */
+	async function handleDelete(capture) {
+		if (!confirm(`确定要删除 "${capture.title}" 吗？\n文件路径: ${capture.file_path}`)) {
+			return;
+		}
+
+		try {
+			// Delete the file from Obsidian vault
+			await obsidianApiClient.deleteNote(capture.file_path);
+			captures = captures.filter((c) => c.id !== capture.id);
 			selectedCapture = null;
 		} catch (err) {
-			console.error('Failed to delete capture:', err);
-			error = err.message;
+			console.error('Failed to delete note:', err);
+			error = `删除失败: ${err.message}`;
 		}
 	}
 
@@ -136,20 +184,20 @@
 				{#each captures as capture (capture.id)}
 					<div
 						class="bg-background-secondary border border-gray-700 rounded-lg p-4 hover:border-primary-700 transition-colors cursor-pointer"
-						on:click={() => (selectedCapture = capture)}
-						on:keydown={(e) => e.key === 'Enter' && (selectedCapture = capture)}
+						on:click={() => loadCaptureContent(capture)}
+						on:keydown={(e) => e.key === 'Enter' && loadCaptureContent(capture)}
 						role="button"
 						tabindex="0"
 					>
 						<div class="flex items-start justify-between mb-2">
 							<div class="flex items-center gap-2">
 								<span class="text-lg">
-									{#if capture.input_type === 'voice'}
+									{#if capture.location === '00_Capture/Inbox'}
+										📥
+									{:else if capture.location === '01_Periodic/Daily'}
+										📅
+									{:else if capture.input_type === 'voice'}
 										🎤
-									{:else if capture.content?.toLowerCase().includes('idea')}
-										💡
-									{:else if capture.content?.toLowerCase().includes('project')}
-										🚀
 									{:else}
 										📝
 									{/if}
@@ -160,26 +208,26 @@
 							</div>
 
 							<div class="flex items-center gap-2">
-								{#if capture.synced}
-									<span class="text-xs bg-green-900/50 text-green-300 px-2 py-1 rounded">
-										✅ 已同步
+								{#if capture.location === '00_Capture/Inbox'}
+									<span class="text-xs bg-purple-900/50 text-purple-300 px-2 py-1 rounded">
+										📥 Inbox
 									</span>
-								{:else}
-									<span class="text-xs bg-yellow-900/50 text-yellow-300 px-2 py-1 rounded">
-										⏳ 待同步
+								{:else if capture.location === '01_Periodic/Daily'}
+									<span class="text-xs bg-blue-900/50 text-blue-300 px-2 py-1 rounded">
+										📅 Daily
 									</span>
 								{/if}
 
-								{#if capture.offline}
-									<span class="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">
-										📵 离线
+								{#if capture.synced}
+									<span class="text-xs bg-green-900/50 text-green-300 px-2 py-1 rounded">
+										✅ 已同步
 									</span>
 								{/if}
 							</div>
 						</div>
 
 						<p class="text-white text-sm line-clamp-2">
-							{getPreview(capture.content)}
+							{capture.title}
 						</p>
 					</div>
 				{/each}
@@ -267,7 +315,7 @@
 				</button>
 
 				<button
-					on:click={() => handleDelete(selectedCapture.id)}
+					on:click={() => handleDelete(selectedCapture)}
 					class="px-6 py-2 bg-red-900 hover:bg-red-800 text-red-300 rounded-lg transition-colors"
 				>
 					🗑️ 删除
