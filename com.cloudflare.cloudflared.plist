@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>Label</key>
+		<string>com.cloudflare.cloudflared</string>
+		<key>ProgramArguments</key>
+		<array>
+			<string>/opt/homebrew/bin/cloudflared</string>
+			<string>tunnel</string>
+			<string>run</string>
+			<string>--protocol</string>
+			<string>http2</string>
+			<string>--token</string>
+			<string>eyJhIjoiNjg1MjIxNDNlNjA4NzE2NTJjM2VjZWEzMzI0NGM3ZDciLCJ0IjoiNjY4ZGIyMWMtY2U0OS00NDE2LWJlNTMtMjI3YWE1NDk2ODhjIiwicyI6Ill6TTJNMkkyTVRRdE1ESTBPUzAwTUdNMExXSm1OVE10TUdFMFlUSTJPV0ZpT1RBMyJ9</string>
+		</array>
+		<key>RunAtLoad</key>
+		<true/>
+		<key>StandardOutPath</key>
+		<string>/Library/Logs/com.cloudflare.cloudflared.out.log</string>
+		<key>StandardErrorPath</key>
+		<string>/Library/Logs/com.cloudflare.cloudflared.err.log</string>
+		<key>KeepAlive</key>
+		<dict>
+			<key>SuccessfulExit</key>
+			<false/>
+		</dict>
+		<key>ThrottleInterval</key>
+		<integer>5</integer>
+	</dict>
+</plist>
