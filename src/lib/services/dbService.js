@@ -306,6 +306,161 @@ class DBService {
 	}
 
 	/**
+	 * Generic get method for any object store
+	 * @param {string} storeName - Object store name (e.g., 'taskCache', 'noteCache')
+	 * @param {string} key - Key to retrieve
+	 * @returns {Promise<any>} Value associated with the key
+	 */
+	async get(storeName, key) {
+		if (!this.db) {
+			await this.init();
+		}
+
+		return new Promise((resolve, reject) => {
+			// Ensure store exists
+			if (!this.db.objectStoreNames.contains(storeName)) {
+				console.warn(`[DBService] Store '${storeName}' does not exist, creating it...`);
+				// Store doesn't exist, need to create it via version upgrade
+				this.db.close();
+				this.dbVersion++;
+
+				const request = indexedDB.open(this.dbName, this.dbVersion);
+
+				request.onupgradeneeded = (event) => {
+					const db = event.target.result;
+					if (!db.objectStoreNames.contains(storeName)) {
+						db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: false });
+					}
+				};
+
+				request.onsuccess = () => {
+					this.db = request.result;
+					// Try get again
+					const transaction = this.db.transaction([storeName], 'readonly');
+					const objectStore = transaction.objectStore(storeName);
+					const getRequest = objectStore.get(key);
+
+					getRequest.onsuccess = () => resolve(getRequest.result);
+					getRequest.onerror = () => reject(getRequest.error);
+				};
+
+				request.onerror = () => reject(request.error);
+				return;
+			}
+
+			const transaction = this.db.transaction([storeName], 'readonly');
+			const objectStore = transaction.objectStore(storeName);
+			const request = objectStore.get(key);
+
+			request.onsuccess = () => {
+				resolve(request.result);
+			};
+
+			request.onerror = () => {
+				console.error(`[DBService] Failed to get key '${key}' from store '${storeName}':`, request.error);
+				reject(request.error);
+			};
+		});
+	}
+
+	/**
+	 * Generic set method for any object store
+	 * @param {string} storeName - Object store name (e.g., 'taskCache', 'noteCache')
+	 * @param {string} key - Key to store
+	 * @param {any} value - Value to store
+	 * @returns {Promise<void>}
+	 */
+	async set(storeName, key, value) {
+		if (!this.db) {
+			await this.init();
+		}
+
+		return new Promise((resolve, reject) => {
+			// Ensure store exists
+			if (!this.db.objectStoreNames.contains(storeName)) {
+				console.warn(`[DBService] Store '${storeName}' does not exist, creating it...`);
+				// Store doesn't exist, need to create it via version upgrade
+				this.db.close();
+				this.dbVersion++;
+
+				const request = indexedDB.open(this.dbName, this.dbVersion);
+
+				request.onupgradeneeded = (event) => {
+					const db = event.target.result;
+					if (!db.objectStoreNames.contains(storeName)) {
+						db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: false });
+					}
+				};
+
+				request.onsuccess = () => {
+					this.db = request.result;
+					// Try set again
+					const transaction = this.db.transaction([storeName], 'readwrite');
+					const objectStore = transaction.objectStore(storeName);
+					const putRequest = objectStore.put({ id: key, ...value });
+
+					putRequest.onsuccess = () => resolve();
+					putRequest.onerror = () => reject(putRequest.error);
+				};
+
+				request.onerror = () => reject(request.error);
+				return;
+			}
+
+			const transaction = this.db.transaction([storeName], 'readwrite');
+			const objectStore = transaction.objectStore(storeName);
+
+			// Store value with key as 'id' field
+			const record = { id: key, ...value };
+			const request = objectStore.put(record);
+
+			request.onsuccess = () => {
+				console.log(`[DBService] Stored key '${key}' in store '${storeName}'`);
+				resolve();
+			};
+
+			request.onerror = () => {
+				console.error(`[DBService] Failed to set key '${key}' in store '${storeName}':`, request.error);
+				reject(request.error);
+			};
+		});
+	}
+
+	/**
+	 * Delete a key from any object store
+	 * @param {string} storeName - Object store name
+	 * @param {string} key - Key to delete
+	 * @returns {Promise<void>}
+	 */
+	async delete(storeName, key) {
+		if (!this.db) {
+			await this.init();
+		}
+
+		return new Promise((resolve, reject) => {
+			if (!this.db.objectStoreNames.contains(storeName)) {
+				console.warn(`[DBService] Store '${storeName}' does not exist`);
+				resolve(); // Not an error, key doesn't exist anyway
+				return;
+			}
+
+			const transaction = this.db.transaction([storeName], 'readwrite');
+			const objectStore = transaction.objectStore(storeName);
+			const request = objectStore.delete(key);
+
+			request.onsuccess = () => {
+				console.log(`[DBService] Deleted key '${key}' from store '${storeName}'`);
+				resolve();
+			};
+
+			request.onerror = () => {
+				console.error(`[DBService] Failed to delete key '${key}' from store '${storeName}':`, request.error);
+				reject(request.error);
+			};
+		});
+	}
+
+	/**
 	 * Close database connection
 	 */
 	close() {

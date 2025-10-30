@@ -1,12 +1,88 @@
 # 🚀 Production Deployment Fix Report
 
-**Date**: 2025-10-29
-**Status**: ⚠️ Partially Fixed - Action Required
+**Date**: 2025-10-30 (Updated)
+**Status**: ⚠️ New Critical Fix Required
 **Deployment URL**: https://secondbrain-two.vercel.app
 
 ---
 
-## 📊 Issue Summary
+## 🚨 NEW CRITICAL ISSUE (2025-10-30)
+
+### ❌ Issue 5: TaskStore Cache Error - Missing dbService Methods
+**Error**: `TypeError: qt.get is not a function`
+**Status**: **✅ FIXED** - Commit ready to push
+**Severity**: 🔴 **CRITICAL** - TaskStore completely broken
+
+#### Error Details
+```javascript
+[TaskStore] Cache read error: TypeError: qt.get is not a function
+    at Object._loadFromCache (5.DhrnKVd6.js:4:3780)
+    at Object.loadTodaysTasks (5.DhrnKVd6.js:4:1873)
+    at o (5.DhrnKVd6.js:4:24560)
+```
+
+#### Root Cause
+The `taskStore.js` (Phase 3 implementation) calls:
+```javascript
+const cached = await dbService.get('taskCache', key);
+await dbService.set('taskCache', key, data);
+```
+
+But `dbService.js` only has capture-specific methods:
+- ✅ `addCapture()`
+- ✅ `getUnsyncedCaptures()`
+- ✅ `markAsSynced()`
+- ❌ Missing: `get(storeName, key)`
+- ❌ Missing: `set(storeName, key, value)`
+
+#### Impact
+- ❌ Tasks page completely broken
+- ❌ Cannot cache tasks in IndexedDB
+- ❌ Cannot load today's tasks or month tasks
+- ❌ TaskExtractor fails to fetch journal entries
+- ❌ All task-related features non-functional
+
+#### Fix Applied
+Added three new generic methods to `dbService.js`:
+
+**1. `async get(storeName, key)`**
+- Retrieves value from any object store
+- Auto-creates missing stores via database version upgrade
+- Returns `null` if key doesn't exist
+
+**2. `async set(storeName, key, value)`**
+- Stores value in any object store
+- Auto-creates missing stores dynamically
+- Supports multiple stores: 'taskCache', 'noteCache', 'captures'
+
+**3. `async delete(storeName, key)`**
+- Deletes key from any object store
+- Graceful handling if store doesn't exist
+
+**Code Changes** (`src/lib/services/dbService.js`):
+- **Lines 308-364**: Added `get()` method with auto-store creation
+- **Lines 366-427**: Added `set()` method with transaction handling
+- **Lines 429-461**: Added `delete()` method
+
+**Key Features**:
+- ✅ Dynamic object store creation on first use
+- ✅ Automatic database version increment
+- ✅ Proper readonly/readwrite transactions
+- ✅ Comprehensive error handling
+- ✅ Console logging for debugging
+- ✅ Supports unlimited store names
+
+#### Testing Required
+After deployment, verify:
+1. Tasks page loads without errors
+2. Browser DevTools → Application → IndexedDB → Check for 'taskCache' store
+3. Today's tasks display correctly
+4. Task completion toggling works
+5. No console errors related to `qt.get is not a function`
+
+---
+
+## 📊 Previous Issues Summary
 
 You reported 4 production issues based on screenshots and console errors:
 
