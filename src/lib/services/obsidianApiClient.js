@@ -169,6 +169,11 @@ class ObsidianAPIClient {
 	/**
 	 * Capture user input and save to appropriate location
 	 * This is a high-level method that mimics the FastAPI capture endpoint
+	 *
+	 * Saves to 00_Capture/Inbox/ as per Palantir Foundry five-layer architecture:
+	 * - 00_Capture/Inbox/ is for quick temporary notes and ideas
+	 * - Files should be processed and moved to other layers weekly
+	 *
 	 * @param {Object} data - Capture data
 	 * @param {string} data.content - Content to capture
 	 * @param {string} data.input_type - 'text' or 'voice'
@@ -181,16 +186,9 @@ class ObsidianAPIClient {
 			const dateStr = timestamp.toISOString().split('T')[0]; // YYYY-MM-DD
 			const timeStr = timestamp.toTimeString().split(' ')[0].replace(/:/g, '-'); // HH-MM-SS
 
-			// Determine folder based on content (简单规则)
-			let folder = '01_Execution/Daily_Operations/Logs/Journal_Entries';
-
-			// 简单的关键词匹配来决定文件夹
-			const contentLower = data.content.toLowerCase();
-			if (contentLower.includes('idea') || contentLower.includes('想法')) {
-				folder = '01_Execution/Ideas';
-			} else if (contentLower.includes('project') || contentLower.includes('项目')) {
-				folder = '01_Execution/Projects';
-			}
+			// Use 00_Capture/Inbox as default folder (Palantir Foundry architecture)
+			// This is the entry point for all quick captures
+			const folder = '00_Capture/Inbox';
 
 			// Create filename
 			const filename = `${dateStr}_${timeStr}_quick-capture.md`;
@@ -201,7 +199,8 @@ class ObsidianAPIClient {
 created: ${timestamp.toISOString()}
 type: quick-capture
 input_type: ${data.input_type || 'text'}
-tags: [quick-capture]
+tags: [quick-capture, inbox]
+status: unprocessed
 ---
 
 # Quick Capture
@@ -230,27 +229,52 @@ ${data.content}
 
 	/**
 	 * Get timeline of recent notes
+	 * Aggregates notes from multiple sources in the Palantir Foundry architecture:
+	 * - 00_Capture/Inbox: Quick captures
+	 * - 01_Periodic/Daily: Daily journal entries
+	 *
 	 * @param {Object} params - Query parameters
 	 * @returns {Promise<Array>} Timeline entries
 	 */
 	async getTimeline(params = {}) {
 		try {
-			// List files from the logs directory
-			const files = await this.listFiles('01_Execution/Daily_Operations/Logs/Journal_Entries');
+			// Aggregate files from multiple locations
+			const locations = [
+				'00_Capture/Inbox',      // Quick captures
+				'01_Periodic/Daily'      // Daily journal entries
+			];
 
-			// Sort by name (which includes date) and limit
+			let allFiles = [];
+
+			// Fetch files from each location
+			for (const location of locations) {
+				try {
+					const files = await this.listFiles(location);
+					if (files && Array.isArray(files.files)) {
+						allFiles = allFiles.concat(
+							files.files
+								.filter(f => typeof f === 'string' && f.endsWith('.md'))
+								.map(f => ({ path: `${location}/${f}`, location }))
+						);
+					}
+				} catch (error) {
+					console.warn(`Failed to fetch files from ${location}:`, error);
+					// Continue with other locations
+				}
+			}
+
+			// Sort by filename (which includes date) and limit
 			const limit = params.limit || 50;
-			const sorted = files
-				.filter(f => f.endsWith('.md'))
-				.sort()
-				.reverse()
+			const sorted = allFiles
+				.sort((a, b) => b.path.localeCompare(a.path)) // Reverse chronological
 				.slice(0, limit);
 
 			return {
-				items: sorted.map(path => ({
+				items: sorted.map(({ path, location }) => ({
 					file_path: path,
 					title: path.split('/').pop().replace('.md', ''),
-					created: path.match(/\d{4}-\d{2}-\d{2}/)?.[0] || 'Unknown'
+					created: path.match(/\d{4}-\d{2}-\d{2}/)?.[0] || 'Unknown',
+					location
 				})),
 				total: sorted.length
 			};
