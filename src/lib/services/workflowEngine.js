@@ -1,424 +1,984 @@
 /**
- * Workflow Engine
- * Manages workflow execution, state, and step progression
+ * Workflow Engine Service
+ *
+ * Executes workflow definitions with support for:
+ * - Sequential step execution with data flow
+ * - Multiple step types (query-log, ultra-analyze, interactive-reflection, etc.)
+ * - Progress saving and resumption
+ * - Integration with Obsidian API and Ultra MCP
+ * - Quality validation and error handling
+ *
+ * Based on WORKFLOWS.md standards for standardized daily reflection and planning.
  */
 
-import { writable, derived } from 'svelte/store';
 import { obsidianApiClient } from './obsidianApiClient.js';
-import { analyzeDailyJournal, analyzeMonthlyData } from './analysisService.js';
+import { writable, derived, get } from 'svelte/store';
 
-// Workflow state store
-export const workflowState = writable({
-	currentWorkflow: null,
-	currentStep: 0,
-	totalSteps: 0,
-	data: {},
-	analysis: null,
-	responses: {},
-	loading: false,
-	error: null
-});
-
-// Derived stores
-export const workflowProgress = derived(workflowState, ($state) => {
-	if (!$state.currentWorkflow || $state.totalSteps === 0) return 0;
-	return Math.round((($state.currentStep + 1) / $state.totalSteps) * 100);
-});
+// ============================================================================
+// Store Definitions
+// ============================================================================
 
 /**
- * Workflow definitions
+ * Current workflow execution state
+ * @type {import('svelte/store').Writable<WorkflowState>}
  */
-const WORKFLOWS = {
-	// Daily Reflection (Evening Mode)
-	'daily-reflection': {
-		id: 'daily-reflection',
-		name: '每日反思',
-		mode: 'evening',
-		totalSteps: 5,
-		steps: [
-			{
-				id: 'read-journal',
-				title: '读取今日日志',
-				type: 'auto',
-				async execute(data) {
-					const today = new Date().toISOString().split('T')[0];
-					const year = today.substring(0, 4);
-					const path = `01_Execution/Daily_Operations/Logs/Journal_Entries/${year}/${today}-工作日志.md`;
-
-					try {
-						const content = await obsidianApiClient.readNote(path);
-						return {
-							journalPath: path,
-							journalContent: content,
-							date: today
-						};
-					} catch (error) {
-						console.warn('Journal not found, will ask user for summary');
-						return {
-							journalPath: null,
-							journalContent: null,
-							date: today,
-							needsUserInput: true
-						};
-					}
-				}
-			},
-			{
-				id: 'analyze',
-				title: 'AI深度分析',
-				type: 'auto',
-				async execute(data) {
-					const content = data.journalContent || data.userSummary || '';
-					const analysis = await analyzeDailyJournal(content);
-					return { analysis };
-				}
-			},
-			{
-				id: 'reflection',
-				title: '五维度互动反思',
-				type: 'interactive',
-				dimensions: [
-					{
-						id: 'emotion',
-						title: '情绪与心境',
-						questions: [
-							'今天让您感到最有成就感的是什么？',
-							'什么时候感觉最好？什么时候压力最大？'
-						]
-					},
-					{
-						id: 'effectiveness',
-						title: '工作效能',
-						questions: [
-							'今天完成的事情中，哪一件对您长期发展最有价值？',
-							'您觉得精力最充沛的时段做了什么？这个安排合理吗？'
-						]
-					},
-					{
-						id: 'learning',
-						title: '学习成长',
-						questions: [
-							'除了显性知识，您在处理事务时有什么意外的学习或感悟？',
-							'新获得的知识与您已有知识体系有什么关联？'
-						]
-					},
-					{
-						id: 'health',
-						title: '健康管理',
-						questions: [
-							'身体和精力状态如何？疲劳主要来自哪里？',
-							'健康相关的安排（如看医生、用药）执行情况和感受？'
-						]
-					},
-					{
-						id: 'challenges',
-						title: '挑战应对',
-						questions: ['遇到的困难、解决策略、经验教训是什么？']
-					}
-				]
-			},
-			{
-				id: 'planning',
-				title: '制定明日计划',
-				type: 'interactive',
-				prompts: [
-					{
-						id: 'schedule',
-						question: '明天有哪些固定安排？（会议、培训、重要事务等）',
-						placeholder: '例如：9:00 团队会议，14:00 客户电话...'
-					},
-					{
-						id: 'priorities',
-						question: '明天必须完成的最重要的3件事是什么？',
-						placeholder: '1. ...\n2. ...\n3. ...'
-					},
-					{
-						id: 'learning-plan',
-						question: '明天的学习计划？（N8N、ML等）',
-						placeholder: '例如：完成N8N教程第3章，30分钟...'
-					},
-					{
-						id: 'exercise',
-						question: '明天的运动安排？',
-						placeholder: '例如：晚上7点健身1小时'
-					}
-				]
-			},
-			{
-				id: 'create-journal',
-				title: '创建明日日志',
-				type: 'auto',
-				async execute(data) {
-					const tomorrow = new Date(Date.now() + 86400000)
-						.toISOString()
-						.split('T')[0];
-					const year = tomorrow.substring(0, 4);
-					const path = `01_Execution/Daily_Operations/Logs/Journal_Entries/${year}/${tomorrow}-工作日志.md`;
-
-					const content = generateDailyJournal(tomorrow, data.planningResponses);
-
-					await obsidianApiClient.createNote(content, path);
-
-					return {
-						tomorrowJournal: path,
-						created: true
-					};
-				}
-			}
-		]
-	},
-
-	// Daily Planning (Morning Mode)
-	'daily-planning': {
-		id: 'daily-planning',
-		name: '每日规划',
-		mode: 'morning',
-		totalSteps: 3,
-		steps: [
-			{
-				id: 'read-yesterday',
-				title: '快速回顾昨日',
-				type: 'auto',
-				async execute(data) {
-					const yesterday = new Date(Date.now() - 86400000)
-						.toISOString()
-						.split('T')[0];
-					const year = yesterday.substring(0, 4);
-					const path = `01_Execution/Daily_Operations/Logs/Journal_Entries/${year}/${yesterday}-工作日志.md`;
-
-					try {
-						const content = await obsidianApiClient.readNote(path);
-						const analysis = await analyzeDailyJournal(content);
-						return { yesterdayContent: content, analysis };
-					} catch (error) {
-						return { yesterdayContent: null, analysis: null };
-					}
-				}
-			},
-			{
-				id: 'quick-reflection',
-				title: '快速5维度回顾',
-				type: 'interactive-batch',
-				questions: [
-					{ id: 'emotion', text: '昨天整体感受如何？有什么让您特别满意或困扰的事？' },
-					{
-						id: 'effectiveness',
-						text: '昨天完成的任务中，哪件最重要？时间安排是否合理？'
-					},
-					{ id: 'learning', text: '昨天有什么新的学习收获或感悟吗？' },
-					{
-						id: 'health',
-						text: '今早精力状态如何（1-10分）？昨天的恢复措施（睡眠/运动/午睡）效果如何？'
-					},
-					{
-						id: 'challenges',
-						text: '昨天有未完成的任务或遗留问题需要今天处理吗？'
-					}
-				]
-			},
-			{
-				id: 'create-today-plan',
-				title: '创建今日计划',
-				type: 'auto',
-				async execute(data) {
-					const today = new Date().toISOString().split('T')[0];
-					const year = today.substring(0, 4);
-					const path = `01_Execution/Daily_Operations/Logs/Journal_Entries/${year}/${today}-工作日志.md`;
-
-					const content = generateDailyJournal(today, {
-						yesterday: data.quickReflectionResponses,
-						mode: 'morning'
-					});
-
-					await obsidianApiClient.createNote(content, path);
-
-					return { todayJournal: path, created: true };
-				}
-			}
-		]
-	}
-};
+export const workflowState = writable({
+  workflowId: null,
+  mode: null, // 'evening' | 'morning'
+  currentStep: 0,
+  totalSteps: 0,
+  status: 'idle', // 'idle' | 'loading' | 'executing' | 'paused' | 'completed' | 'error'
+  stepData: {}, // Data outputs from each step
+  userInputs: {}, // User input data for interactive steps
+  startTime: null,
+  lastUpdateTime: null,
+  error: null
+});
 
 /**
- * Start a workflow
+ * Loaded workflow definition
+ * @type {import('svelte/store').Writable<WorkflowDefinition>}
+ */
+export const workflowDefinition = writable(null);
+
+/**
+ * Current step being executed
+ * @type {import('svelte/store').Readable<WorkflowStep>}
+ */
+export const currentStep = derived(
+  [workflowDefinition, workflowState],
+  ([$definition, $state]) => {
+    if (!$definition || $state.currentStep >= $definition.steps.length) {
+      return null;
+    }
+    return $definition.steps[$state.currentStep];
+  }
+);
+
+/**
+ * Execution progress (0-100)
+ * @type {import('svelte/store').Readable<number>}
+ */
+export const executionProgress = derived(
+  workflowState,
+  ($state) => {
+    if ($state.totalSteps === 0) return 0;
+    return Math.round(($state.currentStep / $state.totalSteps) * 100);
+  }
+);
+
+// ============================================================================
+// Workflow Engine Class
+// ============================================================================
+
+class WorkflowEngine {
+  constructor() {
+    this.currentWorkflow = null;
+    this.executionContext = {};
+    this.stepHandlers = new Map();
+
+    // Register step type handlers
+    this._registerStepHandlers();
+  }
+
+  /**
+   * Load a workflow definition from JSON file
+   * @param {string} workflowId - Workflow identifier
+   * @returns {Promise<WorkflowDefinition>}
+   */
+  async loadWorkflow(workflowId) {
+    try {
+      // Load workflow definition from static directory
+      const response = await fetch(`/workflows/${workflowId}.json`);
+      if (!response.ok) {
+        throw new Error(`Failed to load workflow: ${response.statusText}`);
+      }
+
+      const definition = await response.json();
+
+      // Validate workflow definition
+      this._validateWorkflowDefinition(definition);
+
+      workflowDefinition.set(definition);
+      this.currentWorkflow = definition;
+
+      console.log(`[WorkflowEngine] Loaded workflow: ${definition.name}`);
+      return definition;
+    } catch (error) {
+      console.error('Error loading workflow:', error);
+      throw new Error(`Failed to load workflow "${workflowId}": ${error.message}`);
+    }
+  }
+
+  /**
+   * Start workflow execution
+   * @param {string} workflowId - Workflow to execute
+   * @param {object} options - Execution options
+   * @param {string} options.mode - Execution mode ('evening' | 'morning')
+   * @param {object} options.context - Initial execution context
+   * @param {string} options.triggerPhrase - Phrase that triggered workflow
+   * @returns {Promise<void>}
+   */
+  async startWorkflow(workflowId, options = {}) {
+    try {
+      // Load workflow definition
+      const definition = await this.loadWorkflow(workflowId);
+
+      // Detect mode from trigger phrase or time if not specified
+      const mode = options.mode || this._detectMode(definition, options.triggerPhrase);
+
+      // Initialize workflow state
+      workflowState.set({
+        workflowId: definition.id,
+        mode,
+        currentStep: 0,
+        totalSteps: definition.steps.length,
+        status: 'executing',
+        stepData: {},
+        userInputs: {},
+        startTime: new Date().toISOString(),
+        lastUpdateTime: new Date().toISOString(),
+        error: null
+      });
+
+      // Initialize execution context with date variables
+      this.executionContext = {
+        mode,
+        ...this._getDateVariables(),
+        ...options.context
+      };
+
+      console.log(`[WorkflowEngine] Starting workflow: ${definition.name} (${mode} mode)`);
+
+      // Execute first step
+      await this._executeCurrentStep();
+
+    } catch (error) {
+      console.error('Error starting workflow:', error);
+      workflowState.update(state => ({
+        ...state,
+        status: 'error',
+        error: error.message
+      }));
+      throw error;
+    }
+  }
+
+  /**
+   * Execute the current step
+   * @private
+   * @returns {Promise<void>}
+   */
+  async _executeCurrentStep() {
+    const state = get(workflowState);
+    const definition = get(workflowDefinition);
+
+    if (!definition || state.currentStep >= definition.steps.length) {
+      await this._completeWorkflow();
+      return;
+    }
+
+    const step = definition.steps[state.currentStep];
+    console.log(`[WorkflowEngine] Executing step ${state.currentStep + 1}/${state.totalSteps}: ${step.name}`);
+
+    try {
+      // Get step handler
+      const handler = this.stepHandlers.get(step.type);
+      if (!handler) {
+        throw new Error(`No handler registered for step type: ${step.type}`);
+      }
+
+      // Execute step handler
+      const stepOutput = await handler.call(this, step, state, this.executionContext);
+
+      // Save step output
+      workflowState.update(s => ({
+        ...s,
+        stepData: {
+          ...s.stepData,
+          [`step${state.currentStep + 1}`]: stepOutput
+        },
+        lastUpdateTime: new Date().toISOString()
+      }));
+
+      // For interactive steps, wait for user input before proceeding
+      if (this._isInteractiveStep(step)) {
+        console.log(`[WorkflowEngine] Step requires user interaction, pausing...`);
+        workflowState.update(s => ({
+          ...s,
+          status: 'paused'
+        }));
+        return;
+      }
+
+      // Auto-advance to next step for non-interactive steps
+      await this.nextStep();
+
+    } catch (error) {
+      console.error(`Error executing step ${state.currentStep + 1}:`, error);
+
+      // Handle step error based on configuration
+      if (step.onError && step.onError.action === 'continue') {
+        console.warn(`[WorkflowEngine] Step failed but continuing: ${step.onError.message}`);
+        workflowState.update(s => ({
+          ...s,
+          stepData: {
+            ...s.stepData,
+            [`step${state.currentStep + 1}`]: {
+              error: error.message,
+              message: step.onError.message
+            }
+          }
+        }));
+        await this.nextStep();
+      } else {
+        workflowState.update(s => ({
+          ...s,
+          status: 'error',
+          error: `Step ${state.currentStep + 1} failed: ${error.message}`
+        }));
+        throw error;
+      }
+    }
+  }
+
+  /**
+   * Advance to next step
+   * @param {object} userInput - User input data for current step (if interactive)
+   * @returns {Promise<void>}
+   */
+  async nextStep(userInput = null) {
+    const state = get(workflowState);
+
+    // Save user input if provided
+    if (userInput) {
+      workflowState.update(s => ({
+        ...s,
+        userInputs: {
+          ...s.userInputs,
+          [`step${state.currentStep + 1}`]: userInput
+        },
+        stepData: {
+          ...s.stepData,
+          [`step${state.currentStep + 1}`]: {
+            ...s.stepData[`step${state.currentStep + 1}`],
+            reflectionData: userInput
+          }
+        }
+      }));
+    }
+
+    // Move to next step
+    workflowState.update(s => ({
+      ...s,
+      currentStep: s.currentStep + 1,
+      status: 'executing',
+      lastUpdateTime: new Date().toISOString()
+    }));
+
+    // Execute next step
+    await this._executeCurrentStep();
+  }
+
+  /**
+   * Pause workflow execution
+   */
+  pauseWorkflow() {
+    workflowState.update(s => ({
+      ...s,
+      status: 'paused',
+      lastUpdateTime: new Date().toISOString()
+    }));
+  }
+
+  /**
+   * Resume workflow execution
+   * @returns {Promise<void>}
+   */
+  async resumeWorkflow() {
+    workflowState.update(s => ({
+      ...s,
+      status: 'executing',
+      lastUpdateTime: new Date().toISOString()
+    }));
+
+    await this._executeCurrentStep();
+  }
+
+  /**
+   * Complete workflow execution
+   * @private
+   * @returns {Promise<void>}
+   */
+  async _completeWorkflow() {
+    console.log('[WorkflowEngine] Workflow completed successfully');
+
+    const state = get(workflowState);
+    const definition = get(workflowDefinition);
+
+    // Save workflow results to vault if configured
+    if (definition.persistence && definition.persistence.saveToVault) {
+      await this._saveWorkflowResults(state, definition);
+    }
+
+    workflowState.update(s => ({
+      ...s,
+      status: 'completed',
+      lastUpdateTime: new Date().toISOString()
+    }));
+  }
+
+  /**
+   * Save workflow results to Obsidian vault
+   * @private
+   * @param {WorkflowState} state
+   * @param {WorkflowDefinition} definition
+   * @returns {Promise<void>}
+   */
+  async _saveWorkflowResults(state, definition) {
+    try {
+      const savePath = this._interpolateVariables(
+        definition.persistence.savePath,
+        this.executionContext
+      );
+
+      const content = this._generateMarkdownReport(state, definition);
+
+      await obsidianApiClient.createNote(content, savePath);
+
+      console.log(`[WorkflowEngine] Results saved to: ${savePath}`);
+    } catch (error) {
+      console.error('Error saving workflow results:', error);
+      // Don't fail the workflow if saving fails
+    }
+  }
+
+  // ============================================================================
+  // Step Type Handlers
+  // ============================================================================
+
+  /**
+   * Register all step type handlers
+   * @private
+   */
+  _registerStepHandlers() {
+    this.stepHandlers.set('query-log', this._handleQueryLog);
+    this.stepHandlers.set('ultra-analyze', this._handleUltraAnalyze);
+    this.stepHandlers.set('interactive-reflection', this._handleInteractiveReflection);
+    this.stepHandlers.set('interactive-planning', this._handleInteractivePlanning);
+    this.stepHandlers.set('create-note', this._handleCreateNote);
+    this.stepHandlers.set('validation', this._handleValidation);
+  }
+
+  /**
+   * Handle query-log step: Read daily log from Obsidian
+   * @private
+   * @param {WorkflowStep} step
+   * @param {WorkflowState} state
+   * @param {object} context
+   * @returns {Promise<object>}
+   */
+  async _handleQueryLog(step, state, context) {
+    console.log('[WorkflowEngine] Querying daily log...');
+
+    const logPath = this._interpolateVariables(
+      step.config.logPath,
+      context
+    );
+
+    try {
+      const logContent = await obsidianApiClient.readNote(logPath);
+
+      // Extract tasks from log content
+      const tasksExtracted = this._extractTasksFromLog(logContent);
+
+      return {
+        logContent,
+        logPath,
+        logExists: true,
+        tasksExtracted
+      };
+    } catch (error) {
+      console.warn(`Log not found: ${logPath}`);
+
+      if (step.config.fallbackBehavior === 'create-new') {
+        return {
+          logContent: '',
+          logPath,
+          logExists: false,
+          tasksExtracted: []
+        };
+      }
+
+      throw error;
+    }
+  }
+
+  /**
+   * Handle ultra-analyze step: Deep analysis with Ultra MCP
+   * @private
+   * @param {WorkflowStep} step
+   * @param {WorkflowState} state
+   * @param {object} context
+   * @returns {Promise<object>}
+   */
+  async _handleUltraAnalyze(step, state, context) {
+    console.log('[WorkflowEngine] Performing Ultra MCP analysis...');
+
+    // Get input data from previous steps
+    const logContent = state.stepData.step1?.logContent || '';
+
+    // Prepare analysis prompt
+    const analysisPrompt = this._buildAnalysisPrompt(step, logContent, context);
+
+    try {
+      // This would call the actual Ultra MCP API
+      // For now, we'll simulate the response
+      const insights = await this._callUltraMcp('ultra-analyze', {
+        task: analysisPrompt,
+        provider: step.config.provider,
+        focus: step.config.focus
+      });
+
+      return {
+        insights: insights.analysis,
+        patterns: insights.patterns || [],
+        recommendations: insights.recommendations || [],
+        emotionalTrend: insights.emotionalTrend || 'neutral',
+        efficiencyScore: insights.efficiencyScore || 0
+      };
+    } catch (error) {
+      console.error('Ultra MCP analysis failed:', error);
+      throw new Error(`Ultra MCP analysis failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Handle interactive-reflection step: Present reflection questions
+   * @private
+   * @param {WorkflowStep} step
+   * @param {WorkflowState} state
+   * @param {object} context
+   * @returns {Promise<object>}
+   */
+  async _handleInteractiveReflection(step, state, context) {
+    console.log('[WorkflowEngine] Preparing interactive reflection...');
+
+    // Determine which question set to use based on mode
+    const mode = context.mode || 'evening';
+
+    // Build reflection questionnaire based on mode
+    const questionnaire = step.config.dimensions.map(dimension => ({
+      ...dimension,
+      questions: dimension.questions[mode] || dimension.questions.evening
+    }));
+
+    // Return prepared questionnaire
+    // The UI will display this and collect user responses
+    return {
+      questionnaire,
+      mode,
+      ready: true
+    };
+  }
+
+  /**
+   * Handle interactive-planning step: Present planning questions
+   * @private
+   * @param {WorkflowStep} step
+   * @param {WorkflowState} state
+   * @param {object} context
+   * @returns {Promise<object>}
+   */
+  async _handleInteractivePlanning(step, state, context) {
+    console.log('[WorkflowEngine] Preparing interactive planning...');
+
+    // Get AI suggestions from previous steps
+    const reflectionData = state.userInputs.step3 || {};
+    const recommendations = state.stepData.step2?.recommendations || [];
+    const tasksExtracted = state.stepData.step1?.tasksExtracted || [];
+
+    // Build planning phases with AI suggestions
+    const planningPhases = step.config.planningPhases.map(phase => ({
+      ...phase,
+      aiSuggestions: this._generatePlanSuggestions(
+        phase,
+        reflectionData,
+        recommendations,
+        tasksExtracted
+      )
+    }));
+
+    return {
+      planningPhases,
+      ready: true
+    };
+  }
+
+  /**
+   * Handle create-note step: Create note in Obsidian
+   * @private
+   * @param {WorkflowStep} step
+   * @param {WorkflowState} state
+   * @param {object} context
+   * @returns {Promise<object>}
+   */
+  async _handleCreateNote(step, state, context) {
+    console.log('[WorkflowEngine] Creating note...');
+
+    // Get data from previous steps
+    const planData = state.userInputs.step4 || {};
+
+    // Build note content from template
+    const content = this._buildNoteFromTemplate(step, planData, context);
+
+    // Interpolate target path with date variables
+    const targetPath = this._interpolateVariables(
+      step.config.targetPath,
+      context
+    );
+
+    try {
+      await obsidianApiClient.createNote(content, targetPath);
+
+      return {
+        logPath: targetPath,
+        logCreated: true,
+        logPreview: content.slice(0, 500)
+      };
+    } catch (error) {
+      console.error('Failed to create note:', error);
+
+      if (step.onError?.fallback === 'save-to-clipboard') {
+        // In browser environment, we can't access clipboard without user gesture
+        // Instead, return content for UI to handle
+        return {
+          logPath: targetPath,
+          logCreated: false,
+          logPreview: content,
+          error: error.message,
+          clipboardFallback: true
+        };
+      }
+
+      throw error;
+    }
+  }
+
+  /**
+   * Handle validation step: Quality checklist
+   * @private
+   * @param {WorkflowStep} step
+   * @param {WorkflowState} state
+   * @param {object} context
+   * @returns {Promise<object>}
+   */
+  async _handleValidation(step, state, context) {
+    console.log('[WorkflowEngine] Running quality checks...');
+
+    const checklist = step.config.checklist;
+    const results = [];
+
+    for (const check of checklist) {
+      let passed = false;
+
+      if (check.autoCheck) {
+        // Evaluate check expression
+        passed = this._evaluateCheckExpression(check.checkSource, state);
+      } else if (check.requireUserConfirmation) {
+        // Will be confirmed by user in UI
+        passed = true; // Assume passed for now
+      }
+
+      results.push({
+        id: check.id,
+        text: check.text,
+        passed,
+        autoCheck: check.autoCheck
+      });
+    }
+
+    const passedChecks = results.filter(r => r.passed).length;
+    const qualityScore = passedChecks;
+    const failedChecks = results.filter(r => !r.passed);
+
+    // Check if minimum passing checks met
+    if (passedChecks < step.config.minPassingChecks) {
+      console.warn(`Quality check failed: ${passedChecks}/${step.config.minPassingChecks} checks passed`);
+
+      if (!step.config.allowProceedOnFail) {
+        throw new Error(`Quality validation failed: only ${passedChecks}/${step.config.minPassingChecks} checks passed`);
+      }
+    }
+
+    return {
+      qualityScore,
+      passedChecks: results.filter(r => r.passed),
+      failedChecks,
+      allChecks: results
+    };
+  }
+
+  // ============================================================================
+  // Utility Methods
+  // ============================================================================
+
+  /**
+   * Detect workflow mode from trigger phrase or current time
+   * @private
+   * @param {WorkflowDefinition} definition
+   * @param {string} triggerPhrase
+   * @returns {string}
+   */
+  _detectMode(definition, triggerPhrase) {
+    if (!triggerPhrase) {
+      // Auto-detect from current time
+      const hour = new Date().getHours();
+      return (hour >= 19 || hour <= 6) ? 'evening' : 'morning';
+    }
+
+    const lowerPhrase = triggerPhrase.toLowerCase();
+
+    // Check evening trigger phrases
+    if (definition.modes.evening.triggerPhrases.some(p =>
+      lowerPhrase.includes(p.toLowerCase())
+    )) {
+      return 'evening';
+    }
+
+    // Check morning trigger phrases
+    if (definition.modes.morning.triggerPhrases.some(p =>
+      lowerPhrase.includes(p.toLowerCase())
+    )) {
+      return 'morning';
+    }
+
+    // Default to evening
+    return 'evening';
+  }
+
+  /**
+   * Get date-related template variables
+   * @private
+   * @returns {object}
+   */
+  _getDateVariables() {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const formatDate = (date) => ({
+      year: date.getFullYear().toString(),
+      month: (date.getMonth() + 1).toString().padStart(2, '0'),
+      day: date.getDate().toString().padStart(2, '0')
+    });
+
+    const today = formatDate(now);
+    const next = formatDate(tomorrow);
+
+    return {
+      ...today,
+      nextYear: next.year,
+      nextMonth: next.month,
+      nextDay: next.day,
+      nextDate: `${next.year}-${next.month}-${next.day}`
+    };
+  }
+
+  /**
+   * Interpolate template variables in string
+   * @private
+   * @param {string} template
+   * @param {object} variables
+   * @returns {string}
+   */
+  _interpolateVariables(template, variables) {
+    return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+      return variables[key] !== undefined ? variables[key] : match;
+    });
+  }
+
+  /**
+   * Check if step requires user interaction
+   * @private
+   * @param {WorkflowStep} step
+   * @returns {boolean}
+   */
+  _isInteractiveStep(step) {
+    return ['interactive-reflection', 'interactive-planning', 'validation'].includes(step.type);
+  }
+
+  /**
+   * Extract tasks from log content
+   * @private
+   * @param {string} content
+   * @returns {Array<object>}
+   */
+  _extractTasksFromLog(content) {
+    const tasks = [];
+    const lines = content.split('\n');
+
+    for (const line of lines) {
+      // Match markdown checkboxes: - [ ] or - [x]
+      const match = line.match(/^[-*]\s\[([ x])\]\s(.+)$/i);
+      if (match) {
+        const [, status, text] = match;
+        tasks.push({
+          text,
+          completed: status.toLowerCase() === 'x',
+          raw: line
+        });
+      }
+    }
+
+    return tasks;
+  }
+
+  /**
+   * Build analysis prompt for Ultra MCP
+   * @private
+   * @param {WorkflowStep} step
+   * @param {string} logContent
+   * @param {object} context
+   * @returns {string}
+   */
+  _buildAnalysisPrompt(step, logContent, context) {
+    const mode = context.mode || 'evening';
+    const modeDesc = mode === 'evening' ? '深度反思' : '快速规划';
+
+    return `
+请对以下工作日志进行${modeDesc}模式的深度分析：
+
+工作日志内容：
+${logContent || '（今日暂无日志内容）'}
+
+请从以下维度进行分析：
+${step.config.analysisAspects.map((aspect, i) => `${i + 1}. ${aspect}`).join('\n')}
+
+请提供：
+1. 深度洞察 (insights)
+2. 模式识别 (patterns)
+3. 改进建议 (recommendations)
+4. 情绪趋势 (emotionalTrend)
+5. 效能评分 (efficiencyScore: 0-10)
+`.trim();
+  }
+
+  /**
+   * Call Ultra MCP API (placeholder - integrate with actual MCP)
+   * @private
+   * @param {string} tool
+   * @param {object} params
+   * @returns {Promise<object>}
+   */
+  async _callUltraMcp(tool, params) {
+    // TODO: Integrate with actual Ultra MCP API
+    // For now, return mock data
+    console.log(`[WorkflowEngine] Calling Ultra MCP tool: ${tool}`);
+
+    return {
+      analysis: '基于工作日志的深度分析结果...',
+      patterns: ['效率模式', '情绪模式'],
+      recommendations: ['建议1', '建议2'],
+      emotionalTrend: 'positive',
+      efficiencyScore: 7
+    };
+  }
+
+  /**
+   * Generate AI suggestions for planning
+   * @private
+   * @param {object} phase
+   * @param {object} reflectionData
+   * @param {Array} recommendations
+   * @param {Array} tasks
+   * @returns {Array<string>}
+   */
+  _generatePlanSuggestions(phase, reflectionData, recommendations, tasks) {
+    // Placeholder - would use AI to generate suggestions
+    return [
+      '基于昨日反思的建议任务1',
+      '基于昨日反思的建议任务2',
+      '基于昨日反思的建议任务3'
+    ];
+  }
+
+  /**
+   * Build note content from template
+   * @private
+   * @param {WorkflowStep} step
+   * @param {object} data
+   * @param {object} context
+   * @returns {string}
+   */
+  _buildNoteFromTemplate(step, data, context) {
+    const sections = step.config.sections.map(section => {
+      let content = section.content;
+
+      // Interpolate variables
+      content = this._interpolateVariables(content, {
+        ...context,
+        ...data
+      });
+
+      return `## ${section.name}\n\n${content}\n`;
+    });
+
+    return sections.join('\n');
+  }
+
+  /**
+   * Generate markdown report from workflow results
+   * @private
+   * @param {WorkflowState} state
+   * @param {WorkflowDefinition} definition
+   * @returns {string}
+   */
+  _generateMarkdownReport(state, definition) {
+    const { year, month, day } = this._getDateVariables();
+
+    let content = `# ${definition.name} - ${year}-${month}-${day}\n\n`;
+    content += `模式: ${state.mode}\n`;
+    content += `完成时间: ${new Date().toLocaleString('zh-CN')}\n\n`;
+
+    // Add step results
+    Object.entries(state.stepData).forEach(([stepKey, data]) => {
+      content += `## ${stepKey}\n\n`;
+      content += JSON.stringify(data, null, 2);
+      content += '\n\n';
+    });
+
+    return content;
+  }
+
+  /**
+   * Evaluate check expression
+   * @private
+   * @param {string} expression
+   * @param {WorkflowState} state
+   * @returns {boolean}
+   */
+  _evaluateCheckExpression(expression, state) {
+    try {
+      // Simple evaluation - check if referenced data exists
+      // Format: "step1.logExists && step2.insights"
+      const parts = expression.split('&&').map(p => p.trim());
+
+      return parts.every(part => {
+        const [step, field] = part.split('.');
+        return state.stepData[step] && state.stepData[step][field];
+      });
+    } catch (error) {
+      console.warn('Error evaluating check expression:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Validate workflow definition structure
+   * @private
+   * @param {WorkflowDefinition} definition
+   * @throws {Error} If validation fails
+   */
+  _validateWorkflowDefinition(definition) {
+    if (!definition.id || !definition.name) {
+      throw new Error('Workflow must have id and name');
+    }
+
+    if (!definition.steps || definition.steps.length === 0) {
+      throw new Error('Workflow must have at least one step');
+    }
+
+    // Validate each step
+    definition.steps.forEach((step, index) => {
+      if (!step.id || !step.type || !step.name) {
+        throw new Error(`Step ${index + 1} must have id, type, and name`);
+      }
+    });
+  }
+}
+
+// ============================================================================
+// Export Singleton Instance
+// ============================================================================
+
+export const workflowEngine = new WorkflowEngine();
+
+// ============================================================================
+// Legacy API Compatibility (for backward compatibility)
+// ============================================================================
+
+/**
+ * @deprecated Use workflowEngine.startWorkflow() instead
  */
 export async function startWorkflow(workflowId, mode = null) {
-	const workflow = WORKFLOWS[workflowId];
-
-	if (!workflow) {
-		throw new Error(`Workflow ${workflowId} not found`);
-	}
-
-	workflowState.set({
-		currentWorkflow: workflow,
-		currentStep: 0,
-		totalSteps: workflow.totalSteps,
-		data: { mode: mode || workflow.mode },
-		analysis: null,
-		responses: {},
-		loading: false,
-		error: null
-	});
-
-	// Execute first step if it's auto
-	if (workflow.steps[0].type === 'auto') {
-		await executeCurrentStep();
-	}
+  return workflowEngine.startWorkflow(workflowId, { mode });
 }
 
 /**
- * Execute current step
- */
-export async function executeCurrentStep() {
-	workflowState.update((state) => ({ ...state, loading: true, error: null }));
-
-	try {
-		const state = await new Promise((resolve) => {
-			workflowState.subscribe((s) => resolve(s))();
-		});
-
-		const currentStep = state.currentWorkflow.steps[state.currentStep];
-
-		if (currentStep.type === 'auto' && currentStep.execute) {
-			const result = await currentStep.execute(state.data);
-
-			workflowState.update((s) => ({
-				...s,
-				data: { ...s.data, ...result },
-				loading: false
-			}));
-		} else {
-			workflowState.update((s) => ({ ...s, loading: false }));
-		}
-	} catch (error) {
-		console.error('Step execution error:', error);
-		workflowState.update((s) => ({
-			...s,
-			loading: false,
-			error: error.message
-		}));
-	}
-}
-
-/**
- * Submit response and move to next step
+ * @deprecated Use workflowEngine.nextStep() instead
  */
 export async function submitResponse(responses) {
-	workflowState.update((state) => {
-		const newState = {
-			...state,
-			responses: { ...state.responses, ...responses },
-			data: { ...state.data, [`step${state.currentStep}Responses`]: responses }
-		};
-
-		// Move to next step
-		if (state.currentStep < state.totalSteps - 1) {
-			newState.currentStep = state.currentStep + 1;
-		}
-
-		return newState;
-	});
-
-	// Execute next step if it's auto
-	const state = await new Promise((resolve) => {
-		workflowState.subscribe((s) => resolve(s))();
-	});
-
-	const nextStep = state.currentWorkflow.steps[state.currentStep];
-	if (nextStep && nextStep.type === 'auto') {
-		await executeCurrentStep();
-	}
+  return workflowEngine.nextStep(responses);
 }
 
 /**
- * Go to previous step
- */
-export function previousStep() {
-	workflowState.update((state) => ({
-		...state,
-		currentStep: Math.max(0, state.currentStep - 1)
-	}));
-}
-
-/**
- * Reset workflow
+ * @deprecated Use workflowState store directly
  */
 export function resetWorkflow() {
-	workflowState.set({
-		currentWorkflow: null,
-		currentStep: 0,
-		totalSteps: 0,
-		data: {},
-		analysis: null,
-		responses: {},
-		loading: false,
-		error: null
-	});
+  workflowState.set({
+    workflowId: null,
+    mode: null,
+    currentStep: 0,
+    totalSteps: 0,
+    status: 'idle',
+    stepData: {},
+    userInputs: {},
+    startTime: null,
+    lastUpdateTime: null,
+    error: null
+  });
 }
+
+// ============================================================================
+// Type Definitions (JSDoc)
+// ============================================================================
 
 /**
- * Generate daily journal content
+ * @typedef {Object} WorkflowDefinition
+ * @property {string} id
+ * @property {string} name
+ * @property {string} description
+ * @property {Array<WorkflowStep>} steps
+ * @property {object} modes
+ * @property {object} execution
+ * @property {object} integration
+ * @property {object} persistence
  */
-function generateDailyJournal(date, planData) {
-	const created = new Date().toISOString();
 
-	return `---
-created: ${created}
-type: daily-journal
-date: ${date}
-tags: [daily-journal, generated]
----
+/**
+ * @typedef {Object} WorkflowStep
+ * @property {string} id
+ * @property {string} type
+ * @property {string} name
+ * @property {string} description
+ * @property {boolean} mandatory
+ * @property {boolean} canSkip
+ * @property {object} config
+ * @property {object} inputs
+ * @property {object} outputs
+ */
 
-# ${date} 工作日志
-
-## 📋 今日计划
-
-### 核心任务
-${planData?.priorities || '[ ] 待补充'}
-
-### 时间安排
-${planData?.schedule || '待补充具体安排'}
-
-### 学习计划
-${planData?.['learning-plan'] || '[ ] 待补充'}
-
-### 运动安排
-${planData?.exercise || '[ ] 待补充'}
-
----
-
-## 📝 执行记录
-
-### 上午
-
-### 下午
-
-### 晚上
-
----
-
-## 💭 每日反思
-
-### 高光时刻
--
-
-### 遇到的挑战
--
-
-### 学到的东西
--
-
----
-
-## 📊 状态追踪
-
-- **精力状态**: /10
-- **心情指数**: /10
-- **任务完成**: /
-- **专注时长**: 小时
-
----
-
-*📅 由工作流自动生成，请补充具体内容*
-`;
-}
+/**
+ * @typedef {Object} WorkflowState
+ * @property {string} workflowId
+ * @property {string} mode
+ * @property {number} currentStep
+ * @property {number} totalSteps
+ * @property {string} status
+ * @property {object} stepData
+ * @property {object} userInputs
+ * @property {string} startTime
+ * @property {string} lastUpdateTime
+ * @property {string|null} error
+ */

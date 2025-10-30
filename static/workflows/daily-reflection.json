@@ -1,0 +1,609 @@
+{
+  "id": "daily-reflection-planning",
+  "name": "每日反思与规划",
+  "description": "标准化的每日反思和计划工作流，支持晚间深度反思和晨间快速规划两种模式",
+  "version": "1.0.0",
+  "author": "VNext Workflow System",
+  "icon": "🌟",
+
+  "modes": {
+    "evening": {
+      "id": "evening-reflection",
+      "name": "晚间反思模式",
+      "description": "深度五维反思，15-25分钟完整复盘",
+      "triggerPhrases": [
+        "做今天的反思和明天的计划",
+        "做今天的复盘",
+        "晚间反思",
+        "今日总结"
+      ],
+      "timeWindow": {
+        "start": "19:00",
+        "end": "23:00"
+      },
+      "estimatedDuration": "15-25分钟",
+      "reflectionDepth": "deep"
+    },
+    "morning": {
+      "id": "morning-planning",
+      "name": "晨间规划模式",
+      "description": "快速回顾与规划，8-12分钟聚焦行动",
+      "triggerPhrases": [
+        "基于昨天做今天的规划",
+        "晨间规划",
+        "今日计划",
+        "开始今天"
+      ],
+      "timeWindow": {
+        "start": "07:00",
+        "end": "10:00"
+      },
+      "estimatedDuration": "8-12分钟",
+      "reflectionDepth": "quick"
+    }
+  },
+
+  "steps": [
+    {
+      "id": "step-1-read-log",
+      "type": "query-log",
+      "name": "自动读取今日工作日志",
+      "description": "从 Obsidian 自动读取今日工作日志内容",
+      "mandatory": true,
+      "canSkip": false,
+      "config": {
+        "logPath": "01_Execution/Logs/Journal_Entries/{{year}}/{{year}}-{{month}}-{{day}}-工作日志.md",
+        "fallbackBehavior": "create-new",
+        "autoDetectDate": true
+      },
+      "outputs": {
+        "logContent": "今日日志的完整Markdown内容",
+        "logPath": "日志文件路径",
+        "logExists": "日志是否存在",
+        "tasksExtracted": "提取的任务列表"
+      },
+      "onError": {
+        "action": "continue",
+        "message": "未找到今日工作日志，将基于历史数据和用户输入进行反思"
+      }
+    },
+
+    {
+      "id": "step-2-ultra-analyze",
+      "type": "ultra-analyze",
+      "name": "Ultra MCP 深度分析",
+      "description": "使用 Ultra MCP 工具进行智能模式识别和深度分析",
+      "mandatory": true,
+      "canSkip": false,
+      "config": {
+        "provider": "gemini",
+        "focus": "all",
+        "analysisAspects": [
+          "情绪模式识别",
+          "工作效能评估",
+          "学习成长轨迹",
+          "健康状态分析",
+          "挑战应对策略"
+        ],
+        "contextSources": [
+          "{{step1.logContent}}",
+          "历史反思数据",
+          "用户行为模式"
+        ]
+      },
+      "inputs": {
+        "required": ["step1.logContent"],
+        "optional": ["historicalReflections", "userContext"]
+      },
+      "outputs": {
+        "insights": "深度洞察结果",
+        "patterns": "识别的模式",
+        "recommendations": "改进建议",
+        "emotionalTrend": "情绪趋势分析",
+        "efficiencyScore": "效能评分"
+      },
+      "automation": {
+        "autoExecute": true,
+        "requiresUserInput": false,
+        "description": "此步骤完全自动化，不需要用户干预"
+      }
+    },
+
+    {
+      "id": "step-3-five-dimension-reflection",
+      "type": "interactive-reflection",
+      "name": "五维度交互式反思",
+      "description": "通过结构化问题引导用户进行深度反思",
+      "mandatory": true,
+      "canSkip": false,
+      "config": {
+        "presentationMode": "all-at-once",
+        "allowIncompleteAnswers": false,
+        "dimensions": [
+          {
+            "id": "emotion-mindset",
+            "name": "情绪与心境维度",
+            "icon": "💭",
+            "questions": {
+              "evening": [
+                {
+                  "id": "emotion-1",
+                  "text": "今天整体的情绪状态如何？有哪些情绪高点和低点？",
+                  "type": "textarea",
+                  "placeholder": "描述你今天的情绪起伏，特别是触发情绪变化的具体事件...",
+                  "minLength": 50,
+                  "aiContext": "用于情绪趋势分析"
+                },
+                {
+                  "id": "emotion-2",
+                  "text": "今天有什么让你感到满足或失落的时刻？",
+                  "type": "textarea",
+                  "placeholder": "具体描述那些触动你的瞬间，以及它们为何重要...",
+                  "minLength": 50
+                },
+                {
+                  "id": "emotion-3",
+                  "text": "你今天是否有效管理了压力和负面情绪？",
+                  "type": "scale-with-comment",
+                  "scale": {
+                    "min": 1,
+                    "max": 5,
+                    "labels": ["完全失控", "有些困难", "尚可应对", "管理较好", "非常有效"]
+                  },
+                  "followUp": "具体说明你使用了什么方法？"
+                }
+              ],
+              "morning": [
+                {
+                  "id": "emotion-quick",
+                  "text": "昨天的情绪状态如何？今天希望以什么心态开始？",
+                  "type": "textarea",
+                  "placeholder": "简要回顾昨日情绪，设定今日心态目标...",
+                  "minLength": 30
+                }
+              ]
+            }
+          },
+          {
+            "id": "work-efficiency",
+            "name": "工作效能维度",
+            "icon": "⚡",
+            "questions": {
+              "evening": [
+                {
+                  "id": "efficiency-1",
+                  "text": "今天完成了哪些重要任务？哪些任务未完成？",
+                  "type": "task-review",
+                  "config": {
+                    "autoPopulateTasks": true,
+                    "taskSource": "{{step1.tasksExtracted}}",
+                    "allowEdit": true
+                  }
+                },
+                {
+                  "id": "efficiency-2",
+                  "text": "今天的时间管理效果如何？有哪些时间浪费或高效时段？",
+                  "type": "textarea",
+                  "placeholder": "分析时间分配，识别效率陷阱和黄金时段...",
+                  "minLength": 50
+                },
+                {
+                  "id": "efficiency-3",
+                  "text": "今天工作中遇到的最大挑战是什么？如何克服的？",
+                  "type": "textarea",
+                  "placeholder": "描述挑战、应对策略和结果...",
+                  "minLength": 50
+                }
+              ],
+              "morning": [
+                {
+                  "id": "efficiency-quick",
+                  "text": "基于昨天的任务完成情况，今天最重要的3件事是什么？",
+                  "type": "priority-list",
+                  "maxItems": 3,
+                  "requirePriority": true
+                }
+              ]
+            }
+          },
+          {
+            "id": "learning-growth",
+            "name": "学习成长维度",
+            "icon": "📚",
+            "questions": {
+              "evening": [
+                {
+                  "id": "learning-1",
+                  "text": "今天学到了什么新知识、技能或洞察？",
+                  "type": "textarea",
+                  "placeholder": "记录具体的学习内容和顿悟时刻...",
+                  "minLength": 50
+                },
+                {
+                  "id": "learning-2",
+                  "text": "今天有哪些经验教训值得记录和总结？",
+                  "type": "textarea",
+                  "placeholder": "失败教训、成功经验、避坑指南...",
+                  "minLength": 50
+                },
+                {
+                  "id": "learning-3",
+                  "text": "这些学习如何应用到未来的工作和生活中？",
+                  "type": "textarea",
+                  "placeholder": "思考实践路径和应用场景...",
+                  "minLength": 30
+                }
+              ],
+              "morning": [
+                {
+                  "id": "learning-quick",
+                  "text": "昨天的经验教训对今天的工作有什么启发？",
+                  "type": "textarea",
+                  "placeholder": "快速提炼可操作的改进点...",
+                  "minLength": 30
+                }
+              ]
+            }
+          },
+          {
+            "id": "health-management",
+            "name": "健康管理维度",
+            "icon": "🏃",
+            "questions": {
+              "evening": [
+                {
+                  "id": "health-1",
+                  "text": "今天的作息、运动、饮食情况如何？",
+                  "type": "checklist-with-detail",
+                  "options": [
+                    "充足睡眠（7-8小时）",
+                    "规律运动（30分钟以上）",
+                    "健康饮食（营养均衡）",
+                    "适当休息（工作间隙休息）"
+                  ],
+                  "followUp": "详细说明或补充..."
+                },
+                {
+                  "id": "health-2",
+                  "text": "今天是否感到疲劳、不适或精力不足？原因是什么？",
+                  "type": "textarea",
+                  "placeholder": "身体状况、疲劳程度、可能原因...",
+                  "minLength": 30
+                }
+              ],
+              "morning": [
+                {
+                  "id": "health-quick",
+                  "text": "今天的健康目标是什么？（运动、作息、饮食）",
+                  "type": "textarea",
+                  "placeholder": "设定今日健康小目标...",
+                  "minLength": 20
+                }
+              ]
+            }
+          },
+          {
+            "id": "challenge-response",
+            "name": "挑战应对维度",
+            "icon": "🎯",
+            "questions": {
+              "evening": [
+                {
+                  "id": "challenge-1",
+                  "text": "今天遇到的最大困难或挫折是什么？",
+                  "type": "textarea",
+                  "placeholder": "详细描述挑战的性质和影响...",
+                  "minLength": 50
+                },
+                {
+                  "id": "challenge-2",
+                  "text": "你如何应对这些挑战？效果如何？",
+                  "type": "textarea",
+                  "placeholder": "应对策略、执行过程、最终结果...",
+                  "minLength": 50
+                },
+                {
+                  "id": "challenge-3",
+                  "text": "从这次经历中，你对未来类似挑战有什么准备？",
+                  "type": "textarea",
+                  "placeholder": "预防措施、应对策略、资源准备...",
+                  "minLength": 30
+                }
+              ],
+              "morning": [
+                {
+                  "id": "challenge-quick",
+                  "text": "今天可能面临的挑战是什么？如何准备？",
+                  "type": "textarea",
+                  "placeholder": "预见挑战，提前准备应对策略...",
+                  "minLength": 30
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "inputs": {
+        "required": ["step2.insights", "step2.patterns"],
+        "optional": ["step2.recommendations"]
+      },
+      "outputs": {
+        "reflectionData": "所有维度的反思数据",
+        "completionStatus": "各维度完成状态",
+        "reflectionQuality": "反思质量评分"
+      },
+      "validation": {
+        "minAnswerLength": 30,
+        "requireAllDimensions": true,
+        "qualityCheck": true
+      }
+    },
+
+    {
+      "id": "step-4-next-day-planning",
+      "type": "interactive-planning",
+      "name": "次日计划制定",
+      "description": "基于反思结果制定次日行动计划，必须首先确认实际日程",
+      "mandatory": true,
+      "canSkip": false,
+      "config": {
+        "planningPhases": [
+          {
+            "id": "confirm-schedule",
+            "name": "确认实际日程",
+            "priority": "critical",
+            "questions": [
+              {
+                "id": "schedule-1",
+                "text": "明天是否有固定会议、约见或其他时间限制？",
+                "type": "schedule-input",
+                "placeholder": "列出所有已确定的时间承诺（会议、约会、截止日期等）...",
+                "validation": "required"
+              },
+              {
+                "id": "schedule-2",
+                "text": "明天可用的完整工作时间有多少小时？",
+                "type": "time-estimate",
+                "min": 0,
+                "max": 16,
+                "unit": "hours"
+              }
+            ],
+            "criticalNote": "⚠️ 必须优先确认实际日程约束，避免计划脱离现实"
+          },
+          {
+            "id": "task-prioritization",
+            "name": "任务优先级排序",
+            "questions": [
+              {
+                "id": "priority-1",
+                "text": "基于今天的反思和明天的日程，最重要的3项任务是什么？",
+                "type": "priority-task-list",
+                "maxTasks": 3,
+                "requireDeadline": true,
+                "requireEstimatedTime": true,
+                "aiSuggestions": true,
+                "suggestionSource": [
+                  "{{step1.tasksExtracted}}",
+                  "{{step3.reflectionData}}",
+                  "{{step2.recommendations}}"
+                ]
+              },
+              {
+                "id": "priority-2",
+                "text": "有哪些次要任务可以安排在空闲时间？",
+                "type": "task-list",
+                "maxTasks": 5,
+                "optional": true
+              }
+            ]
+          },
+          {
+            "id": "improvement-actions",
+            "name": "改进行动计划",
+            "questions": [
+              {
+                "id": "improvement-1",
+                "text": "基于今天的反思，明天要特别注意或改进的方面是什么？",
+                "type": "textarea",
+                "placeholder": "情绪管理、时间管理、健康习惯等具体改进点...",
+                "minLength": 30,
+                "aiContext": "{{step3.reflectionData}}"
+              },
+              {
+                "id": "improvement-2",
+                "text": "为了实现这些改进，具体要采取什么行动？",
+                "type": "action-list",
+                "maxActions": 3,
+                "requireSpecific": true
+              }
+            ]
+          }
+        ]
+      },
+      "inputs": {
+        "required": [
+          "step3.reflectionData",
+          "step2.recommendations",
+          "step1.tasksExtracted"
+        ]
+      },
+      "outputs": {
+        "tomorrowPlan": "次日完整计划",
+        "priorityTasks": "优先任务列表",
+        "improvementActions": "改进行动",
+        "scheduleConstraints": "时间约束",
+        "estimatedWorkload": "预计工作量"
+      },
+      "validation": {
+        "requireScheduleConfirmation": true,
+        "checkTimeRealistic": true,
+        "maxTasksPerDay": 8
+      }
+    },
+
+    {
+      "id": "step-5-create-next-log",
+      "type": "create-note",
+      "name": "创建次日工作日志",
+      "description": "基于规划自动生成简化的次日工作日志（少于60行）",
+      "mandatory": true,
+      "canSkip": false,
+      "config": {
+        "targetPath": "01_Execution/Logs/Journal_Entries/{{nextYear}}/{{nextYear}}-{{nextMonth}}-{{nextDay}}-工作日志.md",
+        "templateStyle": "simplified",
+        "maxLines": 60,
+        "autoGenerate": true,
+        "sections": [
+          {
+            "name": "基本信息",
+            "content": "日期: {{nextDate}}\n状态: 📝 待开始\n天气: [待填写]\n心情: [待填写]"
+          },
+          {
+            "name": "今日重点",
+            "content": "{{step4.priorityTasks}}",
+            "format": "checklist"
+          },
+          {
+            "name": "时间安排",
+            "content": "{{step4.scheduleConstraints}}",
+            "format": "timeline"
+          },
+          {
+            "name": "改进目标",
+            "content": "{{step4.improvementActions}}",
+            "format": "bullet-list"
+          },
+          {
+            "name": "备注",
+            "content": "[预留空间，随时记录]"
+          }
+        ]
+      },
+      "inputs": {
+        "required": [
+          "step4.tomorrowPlan",
+          "step4.priorityTasks",
+          "step4.improvementActions"
+        ]
+      },
+      "outputs": {
+        "logPath": "创建的日志文件路径",
+        "logCreated": "是否成功创建",
+        "logPreview": "日志内容预览"
+      },
+      "onSuccess": {
+        "message": "✅ 次日工作日志已创建：{{outputs.logPath}}",
+        "action": "show-preview"
+      },
+      "onError": {
+        "message": "❌ 创建日志失败，请手动创建或检查权限",
+        "fallback": "save-to-clipboard"
+      }
+    },
+
+    {
+      "id": "step-6-quality-check",
+      "type": "validation",
+      "name": "质量检查清单",
+      "description": "确认工作流完成质量",
+      "mandatory": true,
+      "canSkip": false,
+      "config": {
+        "checklist": [
+          {
+            "id": "check-1",
+            "text": "是否完整读取并分析了今日工作日志？",
+            "autoCheck": true,
+            "checkSource": "step1.logExists && step2.insights"
+          },
+          {
+            "id": "check-2",
+            "text": "是否使用Ultra MCP进行了深度分析？",
+            "autoCheck": true,
+            "checkSource": "step2.completed && step2.insights"
+          },
+          {
+            "id": "check-3",
+            "text": "是否完成了所有五个维度的反思？",
+            "autoCheck": true,
+            "checkSource": "step3.completionStatus"
+          },
+          {
+            "id": "check-4",
+            "text": "是否优先确认了明天的实际日程安排？",
+            "autoCheck": true,
+            "checkSource": "step4.scheduleConstraints"
+          },
+          {
+            "id": "check-5",
+            "text": "次日计划是否现实可行（考虑时间约束）？",
+            "autoCheck": false,
+            "requireUserConfirmation": true
+          },
+          {
+            "id": "check-6",
+            "text": "次日工作日志是否已创建且内容合理？",
+            "autoCheck": true,
+            "checkSource": "step5.logCreated && step5.logPreview"
+          }
+        ],
+        "minPassingChecks": 6,
+        "allowProceedOnFail": false
+      },
+      "outputs": {
+        "qualityScore": "质量评分",
+        "passedChecks": "通过的检查项",
+        "failedChecks": "未通过的检查项"
+      },
+      "onComplete": {
+        "message": "🎉 每日反思与规划工作流已完成！\n\n质量评分: {{outputs.qualityScore}}/6\n\n请继续保持这个好习惯，明天见！",
+        "saveToHistory": true
+      }
+    }
+  ],
+
+  "execution": {
+    "mode": "sequential",
+    "allowStepSkip": false,
+    "autoSaveProgress": true,
+    "resumable": true,
+    "timeout": {
+      "perStep": 600,
+      "total": 1800
+    }
+  },
+
+  "integration": {
+    "obsidian": {
+      "enabled": true,
+      "apiEndpoint": "{{PUBLIC_API_URL}}",
+      "vaultPaths": {
+        "logs": "01_Execution/Logs/Journal_Entries",
+        "reflections": "03_Insights/Daily_Reflections"
+      }
+    },
+    "ultraMcp": {
+      "enabled": true,
+      "required": true,
+      "tools": ["ultra-analyze", "deep-reasoning", "sequential-thinking"],
+      "provider": "gemini",
+      "autoInvoke": true
+    }
+  },
+
+  "persistence": {
+    "saveToVault": true,
+    "savePath": "03_Insights/Daily_Reflections/{{year}}/{{year}}-{{month}}-{{day}}-反思.md",
+    "format": "markdown",
+    "includeMetadata": true
+  },
+
+  "metadata": {
+    "category": "personal-development",
+    "tags": ["reflection", "planning", "daily-routine", "productivity"],
+    "requiredPermissions": ["vault-read", "vault-write", "ultra-mcp"],
+    "supportedLanguages": ["zh-CN"],
+    "minimumVersion": "1.0.0"
+  }
+}

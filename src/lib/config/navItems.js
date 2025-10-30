@@ -6,20 +6,14 @@
  */
 
 import {
-  Home,
   Zap,
-  Grid3x3,
+  ListTodo,
+  Workflow,
   FolderOpen,
   Settings
 } from 'lucide-svelte';
 
 export const navItems = [
-  {
-    href: '/',
-    label: 'Home',
-    icon: Home,
-    id: 'home'
-  },
   {
     href: '/capture',
     label: '捕获',
@@ -27,9 +21,15 @@ export const navItems = [
     id: 'capture'
   },
   {
-    href: '/workflows-gallery',
+    href: '/tasks',
+    label: '任务',
+    icon: ListTodo,
+    id: 'tasks'
+  },
+  {
+    href: '/workflows',
     label: '工作流',
-    icon: Grid3x3,
+    icon: Workflow,
     id: 'workflows'
   },
   {
