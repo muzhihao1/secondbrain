@@ -2,17 +2,42 @@
  * Application-wide constants
  */
 
+// Helper function to get environment variables with validation
+function getEnv(key, fallback) {
+	const val = import.meta.env[key];
+	return (val !== undefined && String(val).trim() !== '') ? val : fallback;
+}
+
+// Default URLs for different environments
+const DEFAULT_API_URL_PRODUCTION = 'https://obsidian-api.chuhaihub.org';
+const DEFAULT_API_URL_LOCAL = 'https://127.0.0.1:27124';
+
 // API Configuration - Obsidian Local REST API
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://127.0.0.1:27124';
-export const API_KEY = import.meta.env.VITE_API_KEY || '';
+export const API_BASE_URL = getEnv(
+	'VITE_API_URL',
+	import.meta.env.DEV ? DEFAULT_API_URL_LOCAL : DEFAULT_API_URL_PRODUCTION
+);
+export const API_KEY = getEnv('VITE_API_KEY', '');
 export const API_TIMEOUT = 30000; // 30 seconds (increased for Cloudflare Tunnel latency)
 export const MAX_RETRIES = 3;
+
+// Validate critical configuration in production
+if (import.meta.env.PROD) {
+	if (!import.meta.env.VITE_API_URL || !import.meta.env.VITE_API_URL.trim()) {
+		console.error('[Config] ERROR: VITE_API_URL is not set in production!');
+		console.error('[Config] Using fallback URL:', API_BASE_URL);
+	}
+	if (!import.meta.env.VITE_API_KEY || !import.meta.env.VITE_API_KEY.trim()) {
+		console.warn('[Config] WARNING: VITE_API_KEY is not set in production!');
+	}
+}
 
 // Log configuration (useful for debugging)
 if (typeof window !== 'undefined') {
 	console.log('[Config] API_BASE_URL:', API_BASE_URL);
 	console.log('[Config] API_KEY configured:', API_KEY ? 'Yes' : 'No');
 	console.log('[Config] Environment:', import.meta.env.MODE);
+	console.log('[Config] Available env keys:', Object.keys(import.meta.env).filter(k => k.startsWith('VITE_')));
 }
 
 // Audio Recording
