@@ -36,7 +36,8 @@
   $: gridTemplate = `${leftColWidth}px 320px 1fr`;
 
   onMount(async () => {
-    // Load notes from IndexedDB on mount
+    // Initialize vault: load folders first, then notes
+    await vaultActions.loadFolders();
     await vaultActions.loadNotes();
   });
 </script>

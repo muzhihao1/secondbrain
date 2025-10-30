@@ -24,7 +24,7 @@ const FOUNDRY_FOLDERS = [
     id: 'journal',
     name: '工作日志',
     icon: 'calendar',
-    path: '01_Execution/Logs/Journal_Entries',
+    path: '02_Execution/Journal',
     description: '每日工作记录和任务'
   },
   {
@@ -494,9 +494,6 @@ export const vaultActions = {
   }
 };
 
-// Initialize on module load
-if (typeof window !== 'undefined') {
-  vaultActions.loadFolders().catch(err => {
-    console.error('[Vault] Failed to initialize vault:', err);
-  });
-}
+// NOTE: No automatic initialization
+// The vault page should call vaultActions.loadFolders() explicitly on mount
+// This prevents initialization errors when vault.js is imported by other pages
