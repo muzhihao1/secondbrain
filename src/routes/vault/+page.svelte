@@ -93,12 +93,12 @@
   @media (max-width: 768px) {
     .vault-grid {
       grid-template-columns: 1fr;
-      grid-template-rows: auto auto 1fr;
+      grid-template-rows: 30vh 40vh 1fr;
     }
 
     .vault-column {
-      height: auto;
-      max-height: 100vh;
+      height: 100%;
+      min-height: 0;
     }
 
     .vault-column-left {
@@ -114,7 +114,7 @@
     }
 
     .vault-column-right {
-      height: 100vh;
+      height: 100%;
       flex: 1;
     }
   }
