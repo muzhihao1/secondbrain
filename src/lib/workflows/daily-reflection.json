@@ -52,7 +52,7 @@
       "mandatory": true,
       "canSkip": false,
       "config": {
-        "logPath": "01_Execution/Logs/Journal_Entries/{{year}}/{{year}}-{{month}}-{{day}}-工作日志.md",
+        "logPath": "02_Execution/Journal/{{year}}/{{year}}-{{month}}-{{day}}-工作日志.md",
         "fallbackBehavior": "create-new",
         "autoDetectDate": true
       },
@@ -450,7 +450,7 @@
       "mandatory": true,
       "canSkip": false,
       "config": {
-        "targetPath": "01_Execution/Logs/Journal_Entries/{{nextYear}}/{{nextYear}}-{{nextMonth}}-{{nextDay}}-工作日志.md",
+        "targetPath": "02_Execution/Journal/{{nextYear}}/{{nextYear}}-{{nextMonth}}-{{nextDay}}-工作日志.md",
         "templateStyle": "simplified",
         "maxLines": 60,
         "autoGenerate": true,
@@ -579,7 +579,7 @@
       "enabled": true,
       "apiEndpoint": "{{PUBLIC_API_URL}}",
       "vaultPaths": {
-        "logs": "01_Execution/Logs/Journal_Entries",
+        "logs": "02_Execution/Journal",
         "reflections": "03_Insights/Daily_Reflections"
       }
     },
