@@ -1,7 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
 	import { obsidianApiClient } from '$services/obsidianApiClient.js';
-	import BottomNav from '$lib/components/BottomNav.svelte';
 
 	let captures = [];
 	let loading = true;
@@ -234,8 +233,6 @@
 			</div>
 		</div>
 	{/if}
-
-	<BottomNav currentPage="timeline" />
 </div>
 
 <!-- Detail Modal -->

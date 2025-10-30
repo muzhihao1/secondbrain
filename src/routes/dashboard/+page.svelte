@@ -3,7 +3,6 @@
 	import { dbService } from '$services/dbService.js';
 	import { syncStore } from '$stores/syncStore.js';
 	import { captureStore } from '$stores/captureStore.js';
-	import BottomNav from '$lib/components/BottomNav.svelte';
 
 	let stats = {
 		total: 0,
@@ -192,6 +191,4 @@
 			🗑️ 清除数据
 		</button>
 	</div>
-
-	<BottomNav currentPage="dashboard" />
 </div>

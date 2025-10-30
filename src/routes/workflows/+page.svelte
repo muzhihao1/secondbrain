@@ -1,7 +1,6 @@
 <script>
 	import { goto } from '$app/navigation';
 	import AppleCard from '$lib/components/AppleCard.svelte';
-	import BottomNav from '$lib/components/BottomNav.svelte';
 
 	// Workflow cards data
 	const workflows = [
@@ -141,6 +140,4 @@
 			</ul>
 		</div>
 	</div>
-
-	<BottomNav currentPage="workflows" />
 </div>
