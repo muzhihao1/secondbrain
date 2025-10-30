@@ -307,6 +307,8 @@ class TaskExtractor {
    * @param {string} taskId - Task ID
    * @param {boolean} isCompleted - New completion status
    * @returns {Promise<void>}
+   *
+   * CRITICAL: Clears cache after update to ensure data consistency
    */
   async updateTaskStatus(taskId, isCompleted) {
     // Find task in cache
@@ -347,10 +349,12 @@ class TaskExtractor {
       const newContent = lines.join('\n');
       await obsidianApiClient.createNote(newContent, filePath);
 
-      // Update cache
-      task.isCompleted = isCompleted;
+      // CRITICAL FIX: Clear ALL cache after update
+      // This ensures next getTodaysTasks() will re-read from file
+      // and stats will be calculated with fresh data
+      this.clearCache();
 
-      console.log(`[TaskExtractor] Updated task ${taskId} status to ${isCompleted}`);
+      console.log(`[TaskExtractor] Updated task ${taskId} status to ${isCompleted}, cache cleared`);
 
     } catch (error) {
       console.error(`[TaskExtractor] Failed to update task ${taskId}:`, error);
@@ -359,25 +363,30 @@ class TaskExtractor {
   }
 
   /**
-   * Get today's tasks (including overdue)
+   * Get today's tasks (including overdue and completed)
    * @returns {Promise<Object>} Today's tasks categorized
+   *
+   * IMPORTANT: Returns ALL tasks (both completed and incomplete).
+   * UI layer is responsible for filtering/displaying based on completion status.
+   * This ensures accurate statistics calculation.
    */
   async getTodaysTasks() {
     const today = new Date();
     const todayStr = this.formatDate(today);
 
-    // Get tasks from last 30 days to catch overdue items
+    // Optimized: Get tasks from last 7 days (reduced from 30 to minimize 404 errors)
     const startDate = new Date(today);
-    startDate.setDate(startDate.getDate() - 30);
+    startDate.setDate(startDate.getDate() - 7);
 
     const allTasks = await this.getTasksInRange(startDate, today);
 
-    // Categorize tasks
+    // Categorize tasks (keeping both completed and incomplete)
     const todayTasks = [];
     const overdueTasks = [];
 
     allTasks.forEach(task => {
-      if (task.isCompleted) return; // Skip completed tasks
+      // NO LONGER FILTERING OUT COMPLETED TASKS!
+      // This was the root cause of 0% completion rate bug
 
       if (!task.dueDate) {
         // Tasks without due date from today's journal
@@ -393,20 +402,28 @@ class TaskExtractor {
       }
     });
 
-    // Sort by priority
-    const sortByPriority = (a, b) => {
+    // Sort by priority and completion status
+    const sortTasks = (a, b) => {
+      // Incomplete tasks first
+      if (!a.isCompleted && b.isCompleted) return -1;
+      if (a.isCompleted && !b.isCompleted) return 1;
+
+      // Then by priority
       if (a.priority === 'high' && b.priority !== 'high') return -1;
       if (a.priority !== 'high' && b.priority === 'high') return 1;
       return 0;
     };
 
-    todayTasks.sort(sortByPriority);
-    overdueTasks.sort(sortByPriority);
+    todayTasks.sort(sortTasks);
+    overdueTasks.sort(sortTasks);
 
     return {
       today: todayTasks,
       overdue: overdueTasks,
-      total: todayTasks.length + overdueTasks.length
+      total: todayTasks.length + overdueTasks.length,
+      // Additional stats for UI
+      todayIncomplete: todayTasks.filter(t => !t.isCompleted).length,
+      overdueIncomplete: overdueTasks.filter(t => !t.isCompleted).length
     };
   }
 
