@@ -55,13 +55,27 @@
 
   function handleWorkflowClick(id) {
     console.log('Workflow clicked:', id);
-    if (id === 'checklist') {
-      goto('/workflows-gallery');
+    // Navigate to appropriate workflow pages
+    switch (id) {
+      case 'document':
+        goto('/vault');
+        break;
+      case 'upload':
+        goto('/capture');
+        break;
+      case 'checklist':
+      case 'grid':
+        goto('/workflows-gallery');
+        break;
+      default:
+        goto('/workflows-gallery');
     }
   }
 
   function handleNoteClick(note) {
     console.log('Note clicked:', note);
+    // Navigate to vault to view note
+    goto('/vault');
   }
 </script>
 

@@ -18,6 +18,7 @@
    * />
    */
 
+  import { createEventDispatcher } from 'svelte';
   import Card from './Card.svelte';
   import Heading from '../primitives/Heading.svelte';
   import Text from '../primitives/Text.svelte';
@@ -96,10 +97,13 @@
       })
     : '';
 
+  const dispatch = createEventDispatcher();
+
   // Click handler
   function handleCardClick(event) {
     if (!disabled) {
-      // Bubble up to parent
+      // Dispatch click event to parent
+      dispatch('click', { title, status, tags });
     }
   }
 
@@ -108,10 +112,7 @@
     event.stopPropagation(); // Prevent card click
     if (!disabled) {
       // Dispatch custom event
-      const customEvent = new CustomEvent('action', {
-        detail: { title, status }
-      });
-      event.currentTarget.dispatchEvent(customEvent);
+      dispatch('action', { title, status, tags });
     }
   }
 </script>

@@ -12,6 +12,7 @@
    * - Quick actions on each workflow
    */
 
+  import { goto } from '$app/navigation';
   import PageLayout from '$lib/components/layout/PageLayout.svelte';
   import Container from '$lib/components/primitives/Container.svelte';
   import Stack from '$lib/components/primitives/Stack.svelte';
@@ -134,12 +135,16 @@
   // Event handlers
   function handleWorkflowClick(workflow) {
     console.log('Workflow clicked:', workflow.title);
-    // Navigate to workflow detail page
+    // Navigate to workflow detail page (for now go to workflows-gallery)
+    // TODO: Create individual workflow detail pages
+    goto(`/workflows-gallery`);
   }
 
   function handleQuickAction(workflow) {
     console.log('Quick action for:', workflow.title);
-    // Execute workflow
+    // Execute workflow - for now show console message
+    // TODO: Implement workflow execution logic
+    alert(`Starting workflow: ${workflow.title}`);
   }
 
   function setStatusFilter(status) {
