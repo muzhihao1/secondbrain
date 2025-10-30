@@ -286,12 +286,12 @@ ${data.content}
 	}
 
 	/**
-	 * Capture voice recording and convert to text
+	 * Transcribe audio to text without saving
 	 * Uses SvelteKit API endpoint for server-side transcription
 	 * @param {Blob} audioBlob - Audio file blob
-	 * @returns {Promise<Object>} Response with transcribed text
+	 * @returns {Promise<Object>} Transcription result with text and metadata
 	 */
-	async captureVoice(audioBlob) {
+	async transcribeAudio(audioBlob) {
 		try {
 			console.log('[ObsidianAPI] Sending audio to transcription endpoint:', {
 				size: `${Math.round(audioBlob.size / 1024)}KB`,
@@ -314,31 +314,50 @@ ${data.content}
 			}
 
 			const result = await response.json();
-			const transcribedText = result.text;
 
 			console.log('[ObsidianAPI] Transcription successful:', {
 				provider: result.provider,
 				model: result.model,
-				textLength: transcribedText.length,
+				textLength: result.text.length,
 				language: result.metadata?.language
 			});
 
-			// DEBUG: Log the actual transcribed text
-			console.log('[ObsidianAPI] Transcribed text content:', transcribedText);
-			console.log('[ObsidianAPI] Text as JSON:', JSON.stringify(transcribedText));
+			return {
+				text: result.text,
+				provider: result.provider,
+				model: result.model,
+				metadata: result.metadata
+			};
+
+		} catch (error) {
+			console.error('[ObsidianAPI] Transcription failed:', error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Capture voice recording, transcribe and save to Obsidian
+	 * @deprecated Use transcribeAudio() + capture() for unified save flow
+	 * @param {Blob} audioBlob - Audio file blob
+	 * @returns {Promise<Object>} Response with transcribed text
+	 */
+	async captureVoice(audioBlob) {
+		try {
+			// Transcribe audio
+			const transcriptionResult = await this.transcribeAudio(audioBlob);
 
 			// Save transcribed text to Obsidian
 			console.log('[ObsidianAPI] Attempting to save to Obsidian...');
 
 			const saveResult = await this.capture({
-				content: transcribedText,
+				content: transcriptionResult.text,
 				input_type: 'voice',
 				metadata: {
 					transcription: {
-						provider: result.provider,
-						model: result.model,
-						language: result.metadata?.language,
-						duration: result.metadata?.duration
+						provider: transcriptionResult.provider,
+						model: transcriptionResult.model,
+						language: transcriptionResult.metadata?.language,
+						duration: transcriptionResult.metadata?.duration
 					}
 				}
 			});
