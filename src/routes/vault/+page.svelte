@@ -46,14 +46,10 @@
 
 <style>
   .vault-container {
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: calc(100vh - var(--bottomnav-height, 0px));
     overflow: hidden;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    position: relative;
   }
 
   .vault-grid {
