@@ -20,36 +20,57 @@ class DBService {
 	 */
 	async init() {
 		return new Promise((resolve, reject) => {
-			const request = indexedDB.open(this.dbName, this.dbVersion);
+			// First, check current database version
+			const checkRequest = indexedDB.open(this.dbName);
 
-			request.onerror = () => {
-				console.error('IndexedDB error:', request.error);
-				reject(request.error);
-			};
-
-			request.onsuccess = () => {
-				this.db = request.result;
-				console.log('IndexedDB initialized successfully');
-				resolve();
-			};
-
-			request.onupgradeneeded = (event) => {
+			checkRequest.onsuccess = (event) => {
 				const db = event.target.result;
+				const currentVersion = db.version;
+				db.close();
 
-				// Create object store if it doesn't exist
-				if (!db.objectStoreNames.contains(this.storeName)) {
-					const objectStore = db.createObjectStore(this.storeName, {
-						keyPath: 'id',
-						autoIncrement: false
-					});
+				// Use the higher version between constant and current
+				const targetVersion = Math.max(this.dbVersion, currentVersion);
+				this.dbVersion = targetVersion;
 
-					// Create indexes
-					objectStore.createIndex('timestamp', 'timestamp', { unique: false });
-					objectStore.createIndex('synced', 'synced', { unique: false });
-					objectStore.createIndex('type', 'type', { unique: false });
+				console.log(`[DBService] Current version: ${currentVersion}, Target version: ${targetVersion}`);
 
-					console.log('Object store created:', this.storeName);
-				}
+				// Now open with the correct version
+				const request = indexedDB.open(this.dbName, targetVersion);
+
+				request.onerror = () => {
+					console.error('IndexedDB error:', request.error);
+					reject(request.error);
+				};
+
+				request.onsuccess = () => {
+					this.db = request.result;
+					console.log('IndexedDB initialized successfully');
+					resolve();
+				};
+
+				request.onupgradeneeded = (event) => {
+					const db = event.target.result;
+
+					// Create object store if it doesn't exist
+					if (!db.objectStoreNames.contains(this.storeName)) {
+						const objectStore = db.createObjectStore(this.storeName, {
+							keyPath: 'id',
+							autoIncrement: false
+						});
+
+						// Create indexes
+						objectStore.createIndex('timestamp', 'timestamp', { unique: false });
+						objectStore.createIndex('synced', 'synced', { unique: false });
+						objectStore.createIndex('type', 'type', { unique: false });
+
+						console.log('Object store created:', this.storeName);
+					}
+				};
+			};
+
+			checkRequest.onerror = () => {
+				console.error('Failed to check database version:', checkRequest.error);
+				reject(checkRequest.error);
 			};
 		});
 	}
