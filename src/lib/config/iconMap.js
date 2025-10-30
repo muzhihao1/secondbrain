@@ -13,6 +13,7 @@ import {
   BookOpen,
   Archive,
   Inbox,
+  FileCheck,
 
   // Action Icons
   Plus,
@@ -57,6 +58,7 @@ export const folderIcons = {
   book: BookOpen,
   archive: Archive,
   inbox: Inbox,
+  'file-check': FileCheck,
   default: Folder
 };
 
