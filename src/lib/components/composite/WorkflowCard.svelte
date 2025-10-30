@@ -119,13 +119,13 @@
 
 <Card
   {variant}
-  size="md"
+  size="lg"
   interactive={!disabled}
   {disabled}
   on:click={handleCardClick}
 >
   <svelte:fragment slot="header">
-    <Stack spacing="3">
+    <Stack spacing="4">
       <Inline spacing="3" align="center" justify="space-between">
         <Inline spacing="2" align="center">
           {#if icon}
@@ -147,12 +147,12 @@
     </Stack>
   </svelte:fragment>
 
-  <Stack spacing="3">
+  <Stack spacing="4">
     {#if tags.length > 0}
       <Inline spacing="2" wrap>
         {#each tags as tag}
           <span
-            class="px-v-2 py-v-1 rounded-v-base bg-v-surface text-v-text-tertiary text-v-xs font-v-medium"
+            class="px-v-3 py-v-1.5 rounded-v-base bg-v-surface text-v-text-tertiary text-v-xs font-v-medium"
           >
             #{tag}
           </span>
