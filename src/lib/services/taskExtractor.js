@@ -8,8 +8,9 @@
  * - Priority: ⏫ (high priority)
  * - Tags: #tag-name
  *
- * Based on Palantir Foundry architecture:
- * - Source: 01_Execution/Logs/Journal_Entries/YYYY/YYYY-MM-DD-工作日志.md
+ * Vault structure:
+ * - Daily journals: 02_Execution/Journal/YYYY/YYYY-MM-DD-工作日志.md
+ * - Monthly reviews: 01_Periodic/Monthly/YYYY-MM~YYYY-MM_复盘+规划.md
  */
 
 import { obsidianApiClient } from './obsidianApiClient.js';
@@ -250,12 +251,13 @@ class TaskExtractor {
 
   /**
    * Get journal file path for a specific date
+   * Actual vault structure: 02_Execution/Journal/YYYY/YYYY-MM-DD-工作日志.md
    * @param {string} dateStr - Date string (YYYY-MM-DD)
    * @returns {string} Journal file path
    */
   getJournalPath(dateStr) {
     const year = dateStr.substring(0, 4);
-    return `01_Execution/Logs/Journal_Entries/${year}/${dateStr}-工作日志.md`;
+    return `02_Execution/Journal/${year}/${dateStr}-工作日志.md`;
   }
 
   /**

@@ -21,10 +21,10 @@
 	// 判断是否为桌面端
 	$: isDesktop = $screenWidth >= BREAKPOINT_DESKTOP;
 
-	// 根据 sidebar 状态动态调整左边距
-	$: mainMarginClass = isDesktop
-		? ($sidebarExpanded ? 'pl-60' : 'pl-18')
-		: '';
+	// 根据 sidebar 状态动态调整左边距（使用内联样式确保正确应用）
+	$: mainPaddingLeft = isDesktop
+		? ($sidebarExpanded ? '240px' : '72px')  // 15rem = 240px, 4.5rem = 72px
+		: '0';
 
 	// 处理SSR/CSR不匹配，避免闪烁
 	let mounted = false;
@@ -80,7 +80,10 @@
 		{/if}
 
 		<!-- 主内容区域 - 动态左边距匹配 sidebar 宽度 -->
-		<main class="{mainMarginClass} transition-all duration-200 ease-out">
+		<main
+			class="transition-all duration-200 ease-out min-h-screen"
+			style="padding-left: {mainPaddingLeft};"
+		>
 			<slot />
 		</main>
 
