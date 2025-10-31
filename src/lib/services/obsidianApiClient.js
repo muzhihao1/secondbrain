@@ -21,6 +21,18 @@ class ObsidianAPIClient {
 	}
 
 	/**
+	 * Encode file path properly - encode each segment separately to preserve slashes
+	 * @private
+	 * @param {string} path - File path (e.g., "02_Execution/Journal/2025/2025-10-24-工作日志.md")
+	 * @returns {string} Properly encoded path
+	 */
+	_encodePath(path) {
+		// Split by /, encode each segment, then rejoin with /
+		// This preserves directory structure while properly encoding special characters
+		return path.split('/').map(segment => encodeURIComponent(segment)).join('/');
+	}
+
+	/**
 	 * Generic request method with Obsidian REST API authentication
 	 * @private
 	 */
@@ -49,13 +61,29 @@ class ObsidianAPIClient {
 
 				clearTimeout(timeoutId);
 
+				// Detect HTML error pages (502 Bad Gateway, etc.)
+				const contentType = response.headers.get('content-type');
+				if (contentType && contentType.includes('text/html')) {
+					const htmlText = await response.text();
+
+					// Check for common gateway errors
+					if (htmlText.includes('502') || htmlText.includes('Bad gateway')) {
+						throw new Error('UPSTREAM_UNAVAILABLE: The Obsidian API service is temporarily unavailable. Please try again later.');
+					}
+					if (htmlText.includes('504') || htmlText.includes('Gateway timeout')) {
+						throw new Error('UPSTREAM_TIMEOUT: The request took too long to process. The file might be too large.');
+					}
+
+					// Generic HTML error
+					throw new Error('UNEXPECTED_HTML_RESPONSE: Expected JSON or text, got HTML error page');
+				}
+
 				if (!response.ok) {
 					const error = await response.text().catch(() => '');
 					throw new Error(error || `HTTP ${response.status}`);
 				}
 
 				// Handle different response types
-				const contentType = response.headers.get('content-type');
 				if (contentType && contentType.includes('application/json')) {
 					return await response.json();
 				}
@@ -93,7 +121,7 @@ class ObsidianAPIClient {
 	 */
 	async createNote(content, path) {
 		// Use PUT method to create/update file at specified path
-		const response = await this._request(`/vault/${encodeURIComponent(path)}`, {
+		const response = await this._request(`/vault/${this._encodePath(path)}`, {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'text/markdown'  // Override to send markdown text
@@ -114,7 +142,7 @@ class ObsidianAPIClient {
 	 * @returns {Promise<string>} Note content
 	 */
 	async readNote(path) {
-		return await this._request(`/vault/${encodeURIComponent(path)}`, {
+		return await this._request(`/vault/${this._encodePath(path)}`, {
 			method: 'GET'
 		});
 	}
@@ -126,7 +154,7 @@ class ObsidianAPIClient {
 	 * @returns {Promise<Object>} Response
 	 */
 	async updateNote(path, content) {
-		return await this._request(`/vault/${encodeURIComponent(path)}`, {
+		return await this._request(`/vault/${this._encodePath(path)}`, {
 			method: 'PUT',
 			body: JSON.stringify({ content })
 		});
@@ -138,7 +166,7 @@ class ObsidianAPIClient {
 	 * @returns {Promise<Object>} Response
 	 */
 	async deleteNote(path) {
-		return await this._request(`/vault/${encodeURIComponent(path)}`, {
+		return await this._request(`/vault/${this._encodePath(path)}`, {
 			method: 'DELETE'
 		});
 	}
@@ -149,7 +177,7 @@ class ObsidianAPIClient {
 	 * @returns {Promise<Array>} List of files
 	 */
 	async listFiles(folder = '') {
-		const endpoint = folder ? `/vault/${encodeURIComponent(folder)}/` : '/vault/';
+		const endpoint = folder ? `/vault/${this._encodePath(folder)}/` : '/vault/';
 		return await this._request(endpoint, {
 			method: 'GET'
 		});
